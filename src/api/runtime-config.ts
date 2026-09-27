@@ -2,6 +2,7 @@ import type { RuntimePurpose } from "../resolution/config-store.ts";
 import { resolveRuntimeChoiceDurable } from "../harness/harness-router.ts";
 import { resolveIndividualAuthRouting } from "../core/individual-auth-routing.ts";
 import { gatewayModelCatalog } from "../model/gateway-models.ts";
+import { isCustomModelId } from "../model/custom-providers.ts";
 import type { AppDeps } from "./app-types.ts";
 import type { ScopeId } from "../types.ts";
 import { orgScope } from "../config.ts";
@@ -57,6 +58,7 @@ export async function userRuntimeConfigBody(ctx: { deps: RuntimeDeps }, scope: S
     account === "anthropic" ? null : store.get(actorId, "openai"),
   ]);
   const snapshot = await runtimeConfigBody(ctx, scope, async (choice) => {
+    if (isCustomModelId(choice.modelId)) return null;
     const route = resolveIndividualAuthRouting(anthropic, openai, choice.modelId, choice.harnessId);
     return route?.harness === choice.harnessId && route.model === choice.modelId ? null : "account_runtime_unavailable";
   });

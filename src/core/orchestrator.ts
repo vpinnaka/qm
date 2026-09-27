@@ -175,6 +175,7 @@ import { isHarnessId, resolveModel, CODEX_SUBSCRIPTION_PROVIDER } from "../model
 import type { ProviderKeys } from "../harness/pi-harness.ts";
 import type { CodexTurnAuth } from "../harness/harness.ts";
 import { resolveIndividualAuthRouting } from "./individual-auth-routing.ts";
+import { isCustomModelId } from "../model/custom-providers.ts";
 import {
   MAX_AUTO_ATTACHMENT_SCREEN_BYTES,
   approvalGrantId,
@@ -3201,7 +3202,13 @@ export function createOrchestrator(deps: OrchestratorDeps): Orchestrator {
           const account = external
             ? "company"
             : (input.modelAccount ?? (await deps.config?.getModelAccountDurable(actor.id)) ?? "company");
-          if (userCredStore && humanTurn && account !== "company") {
+          const requestedModelId = runtime.modelId ?? input.model ?? purposeDefault?.modelId;
+          if (
+            userCredStore &&
+            humanTurn &&
+            account !== "company" &&
+            !(requestedModelId && isCustomModelId(requestedModelId))
+          ) {
             const [anthCred, oaiCred] = await Promise.all([
               account === "openai" ? null : userCredStore.get(actor.id, "anthropic"),
               account === "anthropic" ? null : userCredStore.get(actor.id, "openai"),

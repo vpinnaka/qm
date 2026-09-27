@@ -5,6 +5,7 @@ import * as piHarness from "../src/harness/pi-harness.ts";
 import * as mockHarness from "../src/harness/mock-harness.ts";
 import type { HarnessTurnInput } from "../src/harness/harness.ts";
 import { resolveModel } from "../src/model/pi-models.ts";
+import { setCustomProviders } from "../src/model/custom-providers.ts";
 import { testConfig } from "./support/test-config.ts";
 
 const turns: HarnessTurnInput[] = [];
@@ -261,4 +262,61 @@ test("partial personal web choices queue the complete validated scoped runtime",
   const oauth = await built.runs.get(second.runId!);
   assert.equal(oauth?.request.harness, "codex");
   assert.equal(oauth?.request.model, "gpt-5.6-terra");
+});
+
+test("a personal subscription user can pick an org custom provider model, which runs on company access", async () => {
+  turns.length = 0;
+  const built = buildApp(testConfig());
+  await built.customProviders!.upsert(
+    {
+      id: "river",
+      name: "River",
+      protocol: "openai",
+      baseUrl: "http://127.0.0.1:8788/v1",
+      models: [{ id: "ledgerloop-bookkeeper" }],
+    },
+    "river-key",
+    "admin",
+  );
+  await built.refreshCustomProviders!();
+  try {
+    built.config.setApprovedHarnesses(["pi"]);
+    built.config.setWebuiModels("org:default-org", ["ledgerloop-bookkeeper", "gpt-5.6-terra"]);
+    await built.config.flushScope("org:default-org");
+    await built.userModelCredentials.setOAuth("U1", "openai", {
+      accessToken: "personal-oauth",
+      expiresAt: Date.now() + 3_600_000,
+    });
+    await built.config.setPersonalModelAuth("U1", true, "openai");
+    const submit = (model: string) =>
+      built.app.turn({
+        surface: "web",
+        actor: { externalId: "U1" },
+        conversation: { kind: "dm", threadRef: `web:U1:custom-${crypto.randomUUID()}` },
+        text: "hello",
+        liveActor: true,
+        async: true,
+        model,
+        harness: "pi",
+      });
+    const custom = await submit("ledgerloop-bookkeeper");
+    assert.ok(custom.runId, JSON.stringify(custom));
+    const subscription = await submit("codex/gpt-5.6-terra");
+    assert.ok(subscription.runId, JSON.stringify(subscription));
+    built.runtime.start();
+    try {
+      const customRun = await built.runs.waitFor(custom.runId!, 5_000);
+      assert.equal(customRun.status, "done", JSON.stringify(customRun.result));
+      const subscriptionRun = await built.runs.waitFor(subscription.runId!, 5_000);
+      assert.equal(subscriptionRun.status, "done", JSON.stringify(subscriptionRun.result));
+      const byModel = new Map(turns.map((t) => [t.runtime!.modelId, t]));
+      assert.equal(byModel.get("ledgerloop-bookkeeper")?.runtime?.harnessId, "pi");
+      assert.equal(byModel.get("ledgerloop-bookkeeper")?.providerKeys?.["openai-codex"], undefined);
+      assert.deepEqual(byModel.get("codex/gpt-5.6-terra")?.providerKeys, { "openai-codex": "personal-oauth" });
+    } finally {
+      await built.runtime.stop();
+    }
+  } finally {
+    setCustomProviders([]);
+  }
 });

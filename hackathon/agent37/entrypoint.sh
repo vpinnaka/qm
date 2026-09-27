@@ -105,11 +105,13 @@ adm() { curl -sS -o /dev/null -w '%{http_code}' -X PUT "http://127.0.0.1:8080$1"
 
 # --------------------------------------------- register river as the default model
 if [ -n "${PROXY_API_KEY:-}" ]; then
-  body=$(MODEL_ID=$MODEL_ID node -e 'const m=process.env.MODEL_ID;console.log(JSON.stringify({name:"LedgerLoop River",protocol:"openai",baseUrl:"http://127.0.0.1:8788/v1",apiKey:process.env.PROXY_API_KEY,models:[{id:m,name:"LedgerLoop Bookkeeper (LoRA)",contextWindow:32768,maxTokens:4096}],validate:false}))')
+  body=$(MODEL_ID=$MODEL_ID node -e 'const m=process.env.MODEL_ID;console.log(JSON.stringify({name:"LedgerLoop River",protocol:"openai",baseUrl:"http://127.0.0.1:8788/v1",apiKey:process.env.PROXY_API_KEY,models:[{id:m,name:"River",contextWindow:32768,maxTokens:4096}],validate:false}))')
   log "register custom provider river -> $(adm /v1/admin/custom-providers/river "$body")"
   log "org default model $MODEL_ID -> $(adm "/v1/admin/scopes/org:$ORG/runtime" \
     "{\"harnessId\":\"$HARNESS\",\"modelId\":\"$MODEL_ID\",\"effortLevel\":\"auto\",\"fastMode\":false}")"
-  log "web UI model picker $MODEL_ID -> $(adm "/v1/admin/scopes/org:$ORG/webui-models" "{\"ids\":[\"$MODEL_ID\"]}")"
+  log "approved harnesses pi + claude -> $(adm "/v1/admin/scopes/org:$ORG/approved-harnesses" '{"ids":["pi","claude"]}')"
+  picker=$(MODEL_ID=$MODEL_ID node --input-type=module -e "import { defaultWebuiModelIds } from '$APP/src/model/pi-models.ts'; console.log(JSON.stringify({ ids: [process.env.MODEL_ID, ...defaultWebuiModelIds()] }))")
+  log "web UI model picker $MODEL_ID + defaults -> $(adm "/v1/admin/scopes/org:$ORG/webui-models" "$picker")"
 fi
 
 # ------------------------------------------------------------------- web UI
