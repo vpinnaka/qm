@@ -112,6 +112,7 @@ const MARK_KEYS: Record<string, "claude" | "codex" | "pi" | "opencode" | "gemini
   pi: "pi",
   claude: "claude",
   openai: "openai",
+  "openai-codex": "openai",
   codex: "codex",
 };
 
