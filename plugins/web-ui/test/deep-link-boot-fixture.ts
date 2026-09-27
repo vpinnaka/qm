@@ -243,6 +243,8 @@ export async function harness(opts: HarnessOptions): Promise<Harness> {
   });
 
   const vite = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom" });
+  const { setAccountantMode } = await vite.ssrLoadModule("/src/shell-state.ts");
+  setAccountantMode(false);
   const shell = await vite.ssrLoadModule("/src/shell.ts");
   const sessions = await vite.ssrLoadModule("/src/sessions.ts");
   const conversations = await vite.ssrLoadModule("/src/conversations.ts");

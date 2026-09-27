@@ -22,8 +22,13 @@ const labels: Record<string, string> = {
   crons: "Crons",
   deploys: "Apps",
   webhooks: "Webhooks",
-  contexts: accountantMode() ? "Clients" : "Projects",
+  contexts: "Projects",
 };
+
+function label(kind: string): string {
+  if (kind === "contexts" && accountantMode()) return "Clients";
+  return labels[kind] ?? kind;
+}
 
 export function resourceResults(
   result: ResourceSearchResponse,
@@ -35,7 +40,7 @@ export function resourceResults(
       .map((hit) => ({
         title: hit.title,
         description: hit.snippet,
-        group: labels[hit.kind]!,
+        group: label(hit.kind),
         href: deepLinkPath(
           base,
           hit.kind,
@@ -44,7 +49,7 @@ export function resourceResults(
           hit.kind === "contexts" ? null : hit.id,
         ),
       })),
-    failed: result.failed.filter((kind) => !isView(kind) || canView(kind)).map((kind) => labels[kind] ?? kind),
+    failed: result.failed.filter((kind) => !isView(kind) || canView(kind)).map((kind) => label(kind)),
   };
 }
 

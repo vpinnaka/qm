@@ -159,7 +159,8 @@ test("the personal-account picker preserves composer choices and saves context d
   let siblingComposer: ComposerSurface | undefined;
   let resetContext: (() => void) | undefined;
   try {
-    const { appState } = await vite.ssrLoadModule("/src/shell-state.ts");
+    const { appState, setAccountantMode } = await vite.ssrLoadModule("/src/shell-state.ts");
+    setAccountantMode(false);
     const { createComposerSurface } = await vite.ssrLoadModule("/src/composer.ts");
     const { render } = await vite.ssrLoadModule("lit");
     appState.me = { user: "tester", org: "test", individualModelAuth: true, modelAuthConnected: true };

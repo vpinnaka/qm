@@ -517,21 +517,21 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                           aria-expanded=${loadoutSection === "add" ? "true" : "false"}
                           ?disabled=${entries.length >= LOADOUT_CAP}
                           @mouseenter=${() => {
-                      if (isPhone() || entries.length >= LOADOUT_CAP) return;
-                      loadoutSectionHovered = true;
-                      openLoadoutSection("add");
-                    }}
+                            if (isPhone() || entries.length >= LOADOUT_CAP) return;
+                            loadoutSectionHovered = true;
+                            openLoadoutSection("add");
+                          }}
                           @keydown=${(e: KeyboardEvent) => {
-                      if (e.key === "ArrowRight") {
-                        e.preventDefault();
-                        loadoutSectionHovered = false;
-                        openLoadoutSection("add", true);
-                      }
-                    }}
+                            if (e.key === "ArrowRight") {
+                              e.preventDefault();
+                              loadoutSectionHovered = false;
+                              openLoadoutSection("add", true);
+                            }
+                          }}
                           @click=${(e: MouseEvent) => {
-                      loadoutSectionHovered = e.detail !== 0 && !isPhone();
-                      openLoadoutSection("add", e.detail === 0);
-                    }}
+                            loadoutSectionHovered = e.detail !== 0 && !isPhone();
+                            openLoadoutSection("add", e.detail === 0);
+                          }}
                         >
                           <span class="loadout-icon" aria-hidden="true">${icon(Plus, 16)}</span><span>Add models</span
                           ><span class="loadout-end">${icon(ChevronRight, 14)}</span>

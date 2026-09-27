@@ -15,7 +15,7 @@ interface McpServerView {
   scopes?: string[];
 }
 
-export const clientPanelsState = {
+const clientPanelsState = {
   scope: null as string | null,
   loading: false,
   brief: "",
@@ -39,7 +39,7 @@ export const clientPanelsState = {
 let loadSeq = 0;
 let redraw: () => void = () => {};
 
-export function clientPanelsApply(scopeId: string): boolean {
+function clientPanelsApply(scopeId: string): boolean {
   return accountantMode() && scopeId.startsWith(WEB_PROJECT_SCOPE_PREFIX);
 }
 
@@ -224,8 +224,45 @@ async function removeIntegration(id: string): Promise<void> {
   }
 }
 
+function briefBody(): TemplateResult {
+  if (!clientPanelsState.briefEditing)
+    return clientPanelsState.brief
+      ? html`<pre class="client-brief-text" dir="auto">${clientPanelsState.brief}</pre>`
+      : html`<div class="context-inline-empty">No brief yet. Add one so the bookkeeper knows this client.</div>`;
+  return html`<textarea
+      class="client-brief-input"
+      rows="14"
+      aria-label="Client brief"
+      .value=${clientPanelsState.briefDraft}
+      ?disabled=${clientPanelsState.briefSaving}
+      @input=${(e: InputEvent) => {
+        clientPanelsState.briefDraft = (e.currentTarget as HTMLTextAreaElement).value;
+      }}
+    ></textarea>
+    <div class="client-panel-actions">
+      <button
+        class="btn primary"
+        type="button"
+        ?disabled=${clientPanelsState.briefSaving}
+        @click=${() => void saveBrief()}
+      >
+        ${clientPanelsState.briefSaving ? "Saving…" : "Save brief"}
+      </button>
+      <button
+        class="btn"
+        type="button"
+        ?disabled=${clientPanelsState.briefSaving}
+        @click=${() => {
+          clientPanelsState.briefEditing = false;
+          redraw();
+        }}
+      >
+        Cancel
+      </button>
+    </div>`;
+}
+
 function briefPanel(): TemplateResult {
-  const editing = clientPanelsState.briefEditing;
   return html`
     <section class="context-panel client-brief-panel" aria-labelledby="client-brief-title">
       <div class="context-panel-heading">
@@ -234,7 +271,7 @@ function briefPanel(): TemplateResult {
           <p class="context-panel-copy">What the bookkeeper follows on every task for this client.</p>
         </div>
         ${
-          editing
+          clientPanelsState.briefEditing
             ? nothing
             : html`<button
                 class="btn"
@@ -250,43 +287,7 @@ function briefPanel(): TemplateResult {
               </button>`
         }
       </div>
-      ${
-        editing
-          ? html`<textarea
-                class="client-brief-input"
-                rows="14"
-                aria-label="Client brief"
-                .value=${clientPanelsState.briefDraft}
-                ?disabled=${clientPanelsState.briefSaving}
-                @input=${(e: InputEvent) => {
-                  clientPanelsState.briefDraft = (e.currentTarget as HTMLTextAreaElement).value;
-                }}
-              ></textarea>
-              <div class="client-panel-actions">
-                <button
-                  class="btn primary"
-                  type="button"
-                  ?disabled=${clientPanelsState.briefSaving}
-                  @click=${() => void saveBrief()}
-                >
-                  ${clientPanelsState.briefSaving ? "Saving…" : "Save brief"}
-                </button>
-                <button
-                  class="btn"
-                  type="button"
-                  ?disabled=${clientPanelsState.briefSaving}
-                  @click=${() => {
-                    clientPanelsState.briefEditing = false;
-                    redraw();
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>`
-          : clientPanelsState.brief
-            ? html`<pre class="client-brief-text" dir="auto">${clientPanelsState.brief}</pre>`
-            : html`<div class="context-inline-empty">No brief yet. Add one so the bookkeeper knows this client.</div>`
-      }
+      ${briefBody()}
       ${clientPanelsState.briefNotice ? html`<div class="client-panel-status" aria-live="polite">${clientPanelsState.briefNotice}</div>` : nothing}
     </section>
   `;

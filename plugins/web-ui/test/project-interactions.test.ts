@@ -81,7 +81,8 @@ test("project interactions preserve focus and successful local mutations", async
 
   const vite = await createServer({ server: { middlewareMode: true, hmr: false }, appType: "custom" });
   try {
-    const { appState } = await vite.ssrLoadModule("/src/shell-state.ts");
+    const { appState, setAccountantMode } = await vite.ssrLoadModule("/src/shell-state.ts");
+    setAccountantMode(false);
     const { contextsState, renderContexts } = await vite.ssrLoadModule("/src/contexts.ts");
     appState.me = { user: "owner", org: "acme" };
     appState.currentView = "contexts";

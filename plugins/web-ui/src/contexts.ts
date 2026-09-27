@@ -355,17 +355,7 @@ function gridTpl(): TemplateResult {
       )}
     </div>`;
   else if (!contextsLoading) {
-    projectList = html`<div class="empty compact project-empty">
-      ${
-        accountantMode()
-          ? projectsFiltered
-            ? "No clients match your search."
-            : "No clients yet. Onboard your first one."
-          : projectsFiltered
-            ? "No projects match your search."
-            : "No projects yet."
-      }
-    </div>`;
+    projectList = html`<div class="empty compact project-empty">${emptyListCopy(projectsFiltered)}</div>`;
   }
   return html`
     <div class="project-grid-content">
@@ -430,11 +420,21 @@ function contextRow(c: CoreContext): TemplateResult {
   `;
 }
 
+function emptyListCopy(filtered: boolean): string {
+  if (accountantMode()) return filtered ? "No clients match your search." : "No clients yet. Onboard your first one.";
+  return filtered ? "No projects match your search." : "No projects yet.";
+}
+
+function settingsAriaLabel(c: CoreContext): string {
+  if (accountantMode()) return "Client settings";
+  return c.project ? "Project settings" : "Context settings";
+}
+
 function detailTpl(c: CoreContext): TemplateResult {
   const { title, sub, glyph } = contextMeta(c);
   const sessions = sessionsIn(c.scopeId);
   const completelyEmpty = !accountantMode() && sessions.length === 0 && scopeResourcesEmpty(c.scopeId);
-  const settingsLabel = accountantMode() ? "Client settings" : c.project ? "Project settings" : "Context settings";
+  const settingsLabel = settingsAriaLabel(c);
   return html`
     <div class="context-detail">
       <button class="context-back" type="button" @click=${() => selectContext(null)}>

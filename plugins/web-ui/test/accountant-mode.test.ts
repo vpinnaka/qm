@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { deepLinkPath, parseDeepLink } from "../src/deep-link.ts";
+import { resourceResults } from "../src/search-resources.ts";
 import { ACCOUNTANT_MODE, appState, canView } from "../src/shell-state.ts";
 
 test("accountant mode addresses a client by its own page", () => {
@@ -20,6 +21,29 @@ test("a client page URL parses back to the clients view and its item", () => {
   });
   assert.deepEqual(parseDeepLink("", "/clients", ""), { view: "contexts", session: null, item: null });
   assert.deepEqual(parseDeepLink("", "/projects/abc", ""), { view: "contexts", session: null, item: "abc" });
+});
+
+test("search results drop the hidden resources and name projects as clients", () => {
+  const result = resourceResults(
+    {
+      hits: [
+        { id: "skill/1", kind: "skills", title: "Review", snippet: "Changes" },
+        { id: "cron1", kind: "crons", title: "Daily", snippet: "Digest" },
+        { id: "group:team", kind: "contexts", title: "Team", snippet: "Project" },
+      ],
+      failed: ["crons", "contexts"],
+    },
+    "/chat",
+  );
+  assert.deepEqual(
+    result.hits.map((hit) => hit.href),
+    ["/chat/contexts?scope=group%3Ateam"],
+  );
+  assert.deepEqual(
+    result.hits.map((hit) => hit.group),
+    ["Clients"],
+  );
+  assert.deepEqual(result.failed, ["Clients"]);
 });
 
 test("accountant mode hides the developer views and keeps the bookkeeping ones", () => {
