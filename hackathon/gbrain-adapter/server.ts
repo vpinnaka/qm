@@ -1,70 +1,60 @@
-import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdirSync } from "node:fs";
 
-const GBRAIN_HOME = process.env.GBRAIN_HOME ?? "/home/ubuntu/work/gbrain-data";
-const GBRAIN_CLI = process.env.GBRAIN_CLI ?? "/home/ubuntu/work/gbrain-src/src/cli.ts";
-const BUN = process.env.BUN_BIN ?? `${process.env.HOME}/.bun/bin/bun`;
 const PORT = Number(process.env.PORT ?? 8789);
 const SEED_TOKEN = process.env.GBRAIN_SEED_TOKEN ?? "";
+const HOSTED_URL = process.env.GBRAIN_HOSTED_URL ?? "https://gbrain.io/mcp";
+const HOSTED_TOKEN = process.env.GBRAIN_HOSTED_TOKEN ?? "";
 
-// ponytail: one global mutex because PGLite allows a single process to hold the
-// datastore; swap for `gbrain serve --http` + per-source OAuth clients if throughput matters.
-let queue: Promise<unknown> = Promise.resolve();
-function serialized<T>(fn: () => Promise<T>): Promise<T> {
-  const next = queue.then(fn, fn);
-  queue = next.catch(() => {});
-  return next;
-}
-
-function gb(args: string[]): Promise<{ code: number; out: string }> {
-  return serialized(
-    () =>
-      new Promise((resolve) => {
-        const child = spawn(BUN, ["run", GBRAIN_CLI, ...args], {
-          env: { ...process.env, GBRAIN_HOME, NO_COLOR: "1" },
-        });
-        let out = "";
-        child.stdout.on("data", (d) => (out += d));
-        child.stderr.on("data", (d) => (out += d));
-        child.on("close", (code) => resolve({ code: code ?? 1, out: out.trim() }));
-      }),
-  );
-}
-
-function sourceOf(scopeId: string): string {
+function entityOf(scopeId: string): string {
   const bare = scopeId.includes(":") ? scopeId.slice(scopeId.indexOf(":") + 1) : scopeId;
   const slug = bare.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
-  if (!slug) throw new Error(`cannot derive gbrain source from scope ${scopeId}`);
-  return slug;
+  if (!slug) throw new Error(`cannot derive gbrain entity from scope ${scopeId}`);
+  return `client-${slug}`;
 }
 
-const known = new Set<string>();
-async function ensureSource(source: string): Promise<void> {
-  if (known.has(source)) return;
-  const path = `${GBRAIN_HOME}/sources/${source}`;
-  mkdirSync(path, { recursive: true });
-  const added = await gb(["sources", "add", source, "--path", path, "--no-federated", "--force"]);
-  if (added.code !== 0 && !added.out.includes("already")) throw new Error(added.out);
-  known.add(source);
+let rpcId = 0;
+async function gbrain(tool: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
+  if (!HOSTED_TOKEN) throw new Error("GBRAIN_HOSTED_TOKEN is not set");
+  const res = await fetch(HOSTED_URL, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${HOSTED_TOKEN}`,
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method: "tools/call", params: { name: tool, arguments: args } }),
+  });
+  const raw = await res.text();
+  const line = raw.split("\n").find((l) => l.startsWith("data:"));
+  const rpc = JSON.parse(line ? line.slice(5).trim() : raw) as {
+    error?: { message?: string };
+    result?: { isError?: boolean; content?: Array<{ text?: string }> };
+  };
+  if (rpc.error) throw new Error(`gbrain ${tool}: ${rpc.error.message ?? "error"}`);
+  const text = rpc.result?.content?.[0]?.text ?? "";
+  if (rpc.result?.isError) throw new Error(`gbrain ${tool}: ${text}`);
+  return JSON.parse(text) as Record<string, unknown>;
 }
 
-async function recall(scopeId: string, query: string): Promise<string> {
-  const source = sourceOf(scopeId);
-  await ensureSource(source);
-  const args = ["recall", "--source-id", source, "--limit", "50"];
-  if (query) args.push("--query", query);
-  const res = await gb(args);
-  if (res.code !== 0) throw new Error(res.out);
-  return res.out;
+type Fact = { fact?: string; entity_slug?: string };
+
+async function recall(scopeId: string): Promise<string> {
+  const entity = entityOf(scopeId);
+  const out = await gbrain("recall", { entity, limit: 100 });
+  const facts = ((out.facts ?? []) as Fact[]).filter(
+    (f) => (f.entity_slug ?? "").split("/").pop() === entity,
+  );
+  return facts.map((f) => `- ${f.fact ?? ""}`).join("\n");
 }
 
 async function remember(scopeId: string, fact: string, provenance: string): Promise<string> {
-  const source = sourceOf(scopeId);
-  await ensureSource(source);
-  const res = await gb(["remember", fact, "--provenance", provenance, "--source-id", source]);
-  if (res.code !== 0) throw new Error(res.out);
-  return res.out;
+  const out = await gbrain("remember", {
+    entity: entityOf(scopeId),
+    fact,
+    provenance: `qm:${scopeId} ${provenance}`.slice(0, 500),
+    visibility: "world",
+  });
+  return String(out.status_text ?? "remembered");
 }
 
 const TOOLS = [
@@ -94,7 +84,7 @@ const TOOLS = [
 ];
 
 async function callTool(name: string, args: Record<string, string>): Promise<string> {
-  if (name === "recall") return await recall(args.scope ?? "", args.query ?? "");
+  if (name === "recall") return await recall(args.scope ?? "");
   if (name === "capture") {
     const facts = (args.content ?? "").split("\n").map((f) => f.trim()).filter(Boolean);
     const out: string[] = [];
@@ -154,28 +144,33 @@ createServer((req, res) => {
       if (req.method === "POST" && url.pathname === "/clients/seed") {
         const payload = JSON.parse(await body(req)) as { scopeId?: string; clientName?: string; facts?: string[] };
         const scopeId = payload.scopeId ?? "";
-        const source = sourceOf(scopeId);
-        await ensureSource(source);
+        const entity = entityOf(scopeId);
         const page = [
           "---",
-          `title: ${payload.clientName ?? source} client profile`,
+          `title: ${payload.clientName ?? entity} client profile`,
           "---",
           "",
-          `# ${payload.clientName ?? source}`,
+          `# ${payload.clientName ?? entity}`,
           "",
           `Scope: ${scopeId}`,
           "",
           ...(payload.facts ?? []).map((f) => `- ${f}`),
           "",
         ].join("\n");
-        await gb(["put", `clients/${source}`, "--content", page, "--source-id", source, "--force"]);
-        for (const fact of payload.facts ?? []) await remember(scopeId, fact, `seed: ${payload.clientName ?? source}`);
-        json(200, { scopeId, source, facts: (payload.facts ?? []).length });
+        await gbrain("put_page", { slug: `clients/${entity}`, content: page });
+        const existing = await recall(scopeId);
+        let written = 0;
+        for (const fact of payload.facts ?? []) {
+          if (existing.includes(fact)) continue;
+          await remember(scopeId, fact, `seed: ${payload.clientName ?? entity}`);
+          written += 1;
+        }
+        json(200, { scopeId, entity, facts: written });
         return;
       }
       if (req.method === "GET" && url.pathname.startsWith("/clients/")) {
         const scopeId = decodeURIComponent(url.pathname.slice("/clients/".length).replace(/\/memories$/, ""));
-        json(200, { scopeId, source: sourceOf(scopeId), memories: await recall(scopeId, url.searchParams.get("q") ?? "") });
+        json(200, { scopeId, entity: entityOf(scopeId), memories: await recall(scopeId) });
         return;
       }
       json(404, { error: "not_found" });
@@ -183,4 +178,4 @@ createServer((req, res) => {
       json(500, { error: String(err) });
     }
   })();
-}).listen(PORT, "127.0.0.1", () => console.log(`gbrain adapter on http://127.0.0.1:${PORT}`));
+}).listen(PORT, "127.0.0.1", () => console.log(`gbrain adapter on http://127.0.0.1:${PORT} (hosted gbrain)`));
