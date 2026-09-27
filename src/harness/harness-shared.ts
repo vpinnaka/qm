@@ -18,7 +18,7 @@ export interface HarnessToolPlumbing {
   scratchExec?: boolean;
   ownerAuthExec?: boolean;
   reachExec?: boolean;
-  mcpTools?: () => McpToolDescriptor[];
+  mcpTools?: (scope?: ScopeId) => McpToolDescriptor[];
   controlTools?: boolean;
   sandboxResources?: boolean;
   execTimeoutMs?: number;
@@ -124,7 +124,7 @@ export function harnessToolOptions(opts: HarnessToolPlumbing, turn?: HarnessTurn
     scratchExec: opts.scratchExec,
     ownerAuthExec: opts.ownerAuthExec,
     reachExec: opts.reachExec,
-    ...(opts.mcpTools ? { mcpTools: opts.mcpTools } : {}),
+    ...(opts.mcpTools ? { mcpTools: () => opts.mcpTools!(turn?.scopeLabel) } : {}),
     controlTools: opts.controlTools,
     sandboxResources: opts.sandboxResources,
     execTimeoutMs: opts.execTimeoutMs,

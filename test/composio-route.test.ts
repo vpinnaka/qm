@@ -27,6 +27,7 @@ function fixture() {
     serviceCreds: keychain,
     acl,
     composioReturns: createMemoryMap(),
+    scopeApps: createMemoryMap(),
     runs: {
       get: async () => ({
         status: "running",
@@ -475,6 +476,68 @@ test("authorized personal automation may execute but cannot initiate consent", a
   assert.equal((await f.invoke("/v1/composio/authorize", { toolkit: "gmail" }, null, cap)).status, 403);
   f.replies.push(aliceAccount, gmailTool, { successful: true, data: {} });
   assert.equal((await f.invoke("/v1/composio/execute", execution, null, cap)).status, 200);
+});
+
+test("apps attached to a client scope are usable there while unattached ones are refused", async () => {
+  const clientCap = { ...privateCap, scopeId: "group:web-project-acme" };
+  const f = fixture();
+  await f.own();
+  assert.equal((await f.invoke("/v1/composio/execute", execution, null, clientCap)).status, 403);
+  await f.deps.scopeApps!.put("group:web-project-acme", {
+    scopeId: "group:web-project-acme",
+    toolkits: ["gmail"],
+    updatedAt: 0,
+    updatedBy: "alice",
+  });
+  f.replies.push(aliceAccount, gmailTool, { data: { emails: [] }, successful: true });
+  assert.equal((await f.invoke("/v1/composio/execute", execution, null, clientCap)).status, 200);
+  assert.equal(JSON.parse(String(f.calls[2]!.init?.body)).user_id, composioUserId(orgId(), "alice"));
+  f.replies.push({ ...aliceAccount, toolkit: { slug: "github" } }, { ...gmailTool, toolkit: { slug: "github" } });
+  const blocked = await f.invoke("/v1/composio/execute", execution, null, clientCap);
+  assert.equal(blocked.status, 403);
+  assert.equal(blocked.data.error, "toolkit_not_attached");
+});
+
+test("tool discovery in a client scope is limited to that client's attached apps", async () => {
+  const clientCap = { ...privateCap, scopeId: "group:web-project-acme" };
+  const f = fixture();
+  await f.own();
+  await f.deps.scopeApps!.put("group:web-project-acme", {
+    scopeId: "group:web-project-acme",
+    toolkits: ["gmail"],
+    updatedAt: 0,
+    updatedBy: "alice",
+  });
+  assert.equal(
+    (await f.invoke("/v1/composio/tools?toolkit=github", undefined, null, clientCap)).data.error,
+    "toolkit_not_attached",
+  );
+  assert.equal((await f.invoke("/v1/composio/authorize", { toolkit: "github" }, null, clientCap)).status, 403);
+  assert.equal(f.calls.length, 0);
+  f.replies.push({ items: [{ slug: "gmail", toolkit: { slug: "gmail" }, name: "Fetch" }] });
+  assert.equal((await f.invoke("/v1/composio/tools?toolkit=gmail", undefined, null, clientCap)).status, 200);
+  f.replies.push({
+    items: [
+      { slug: "gmail", name: "Gmail" },
+      { slug: "github", name: "GitHub" },
+    ],
+  });
+  const catalog = await f.invoke("/v1/composio/toolkits", undefined, null, clientCap);
+  assert.deepEqual(
+    catalog.data.items.map((x: { id: string }) => x.id),
+    ["gmail"],
+  );
+  f.replies.push({
+    items: [
+      { id: "ca_alice", user_id: composioUserId(orgId(), "alice"), status: "ACTIVE", toolkit: { slug: "gmail" } },
+      { id: "ca_gh", user_id: composioUserId(orgId(), "alice"), status: "ACTIVE", toolkit: { slug: "github" } },
+    ],
+  });
+  const connections = await f.invoke("/v1/composio/connections", undefined, null, clientCap);
+  assert.deepEqual(
+    connections.data.items.map((x: { toolkit: string }) => x.toolkit),
+    ["gmail"],
+  );
 });
 
 test("cron discovery accepts a current capability with distinct thread and session identifiers", async () => {
