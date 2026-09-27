@@ -11,6 +11,7 @@ A fork of QM for accountants who manage many clients. Each client gets its own w
 | Tailored chat | The greeting and suggestion chips come from the active client's brief. | `plugins/web-ui/src/chat.ts` |
 | Finance welcome copy | The first-run welcome text is rewritten for bookkeeping practices. | `plugins/web-ui/src/onboarding-welcome.ts` |
 | Per-client memory | A hosted gbrain adapter gives one gbrain entity per client (`client-<scope>`), so recall can never cross clients. Isolation proof: 7/7 pass. | `hackathon/gbrain-adapter/`, [README-memory.md](README-memory.md) |
+| Bring your own subscription | Users can connect their own ChatGPT/Codex and Claude subscriptions under Settings → AI access. Org custom models like River stay in the same picker and run on company access. | `src/api/runtime-config.ts`, `src/core/orchestrator.ts` |
 | Bookkeeper LoRA | A rank-32 LoRA on `Qwen/Qwen3.5-9B`, trained on River, served as the OpenAI-compatible model `ledgerloop-bookkeeper`. Eval: 96% vs 78% for the base model. | `hackathon/river/`, [river/README.md](river/README.md), [river/EVAL.md](river/EVAL.md) |
 | All-in-one image | One container runs Postgres, the River proxy, the gbrain adapter, QM core, the web UI and a password login front door. | `Dockerfile`, `hackathon/agent37/` |
 
