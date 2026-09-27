@@ -1,7 +1,13 @@
 import { html, nothing, render, type TemplateResult } from "lit";
 import { Building2, UserPlus, X } from "lucide";
 import { errMessage } from "../../chassis/src/errors";
-import { clientBrief, clientFacts, EMPTY_CLIENT_PROFILE, type ClientProfile } from "./client-brief";
+import {
+  clientBrief,
+  clientFacts,
+  DEMO_CLIENT_PROFILE,
+  EMPTY_CLIENT_PROFILE,
+  type ClientProfile,
+} from "./client-brief";
 import { api } from "./core-bridge";
 import { contextsState, ensureContexts } from "./contexts";
 import { fieldSelect, icon, menuSelect } from "./ui";
@@ -241,7 +247,7 @@ function text(name: keyof ClientProfile, label: string, placeholder: string, id?
       name=${name}
       autocomplete="off"
       placeholder=${placeholder}
-      .value=${EMPTY_CLIENT_PROFILE[name]}
+      .value=${onboardPicks[name]}
       ?disabled=${onboardSaving}
     />
   </label>`;
@@ -250,8 +256,20 @@ function text(name: keyof ClientProfile, label: string, placeholder: string, id?
 function area(name: keyof ClientProfile, label: string, placeholder: string): TemplateResult {
   return html`<label class="client-field wide">
     <span>${label}</span>
-    <textarea name=${name} rows="3" placeholder=${placeholder} ?disabled=${onboardSaving}></textarea>
+    <textarea
+      name=${name}
+      rows="6"
+      placeholder=${placeholder}
+      .value=${onboardPicks[name]}
+      ?disabled=${onboardSaving}
+    ></textarea>
   </label>`;
+}
+
+function fillDemoClient(): void {
+  onboardPicks = { ...DEMO_CLIENT_PROFILE };
+  onboardError = "";
+  drawClientOverlay();
 }
 
 function onboardDialog(): TemplateResult | typeof nothing {
@@ -280,12 +298,13 @@ function onboardDialog(): TemplateResult | typeof nothing {
           ${pick("basis", "Accounting basis", ["accrual", "cash"])}
           ${pick("closeCadence", "Close cadence", ["monthly", "quarterly", "annually"])}
           ${text("autoPostThreshold", "Auto-post confidence", "0.9")}
-          ${area("chartNotes", "Chart of accounts notes", "6100 Auto is vehicles only — fuel goes to 6120")}
-          ${area("vendorRules", "Vendor rules (one per line)", "Shell / fuel card -> 6120 Fuel, not 6100 Auto")}
-          ${area("preferences", "Other preferences", "Ask before touching a closed period")}
+          ${area("instructions", "Instructions (one per line)", DEMO_CLIENT_PROFILE.instructions)}
         </div>
         <div class="form-error" aria-live="polite">${onboardError}</div>
         <div class="project-dialog-actions">
+          <button class="btn" type="button" ?disabled=${onboardSaving} @click=${fillDemoClient}>
+            Fill demo example
+          </button>
           <button class="btn" type="button" @click=${closeOnboardClient}>Cancel</button>
           <button class="btn primary" type="submit" ?disabled=${onboardSaving}>
             ${icon(UserPlus, 15)}<span>${onboardSaving ? "Onboarding…" : "Onboard client"}</span>
