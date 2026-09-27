@@ -8,6 +8,7 @@ import { slackWireToPlain, stripSlackDirectives } from "./slack-text";
 import { openSession, refreshSessions, sessionsState, sessionTitle } from "./sessions";
 import { destinations } from "./browse";
 import { UI_BASE } from "./deep-link";
+import { accountantMode } from "./shell-state";
 import { resourceResults, matchResources, type ResourceHit, type ResourceSearchResponse } from "./search-resources";
 import { icon } from "./ui";
 
@@ -419,7 +420,7 @@ function paletteTpl(): TemplateResult {
           <input
             class="chat-search-input"
             type="text"
-            placeholder="Search chats, skills, crons, apps…"
+            placeholder=${accountantMode() ? "Search chats and clients…" : "Search chats, skills, crons, apps…"}
             autocomplete="off"
             spellcheck="false"
             .value=${searchState.query}

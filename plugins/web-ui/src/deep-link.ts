@@ -1,3 +1,7 @@
+import { accountantMode } from "./shell-state.ts";
+
+export const WEB_PROJECT_SCOPE_PREFIX = "group:web-project-";
+
 export const UI_BASE = ((import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/").replace(
   /\/$/,
   "",
@@ -13,8 +17,11 @@ export function deepLinkPath(
   const b = base.replace(/\/$/, "");
   if (view === "contexts" && contextScope) {
     if (itemId) throw new Error("the contexts view is addressed by scope, not by item id");
+    if (accountantMode() && contextScope.startsWith(WEB_PROJECT_SCOPE_PREFIX))
+      return `${b}/clients/${encodeURIComponent(contextScope.slice(WEB_PROJECT_SCOPE_PREFIX.length))}`;
     return `${b}/contexts?scope=${encodeURIComponent(contextScope)}`;
   }
+  if (view === "contexts" && accountantMode() && !itemId) return `${b}/clients`;
   if (view !== "chats") {
     const pathView = view === "deploys" ? "apps" : view;
     return `${b}/${encodeURIComponent(pathView)}${itemId ? `/${encodeURIComponent(itemId)}` : ""}`;
@@ -44,13 +51,14 @@ export function parseDeepLink(
   const pathView = decodeSegment(segments[0] ?? "");
   const projectKind = segments[1] === "channel" || segments[1] === "group" ? segments[1] : null;
   let projectItem: string | null = null;
-  if (pathView === "projects") {
+  const projectView = pathView === "projects" || pathView === "clients";
+  if (projectView) {
     projectItem = projectKind ? decodeSegment(segments[2] ?? "") : decodeSegment(segments[1] ?? "");
   }
   const sessionRoute = pathView === "s" || pathView === "c";
   const sessionSeg = sessionRoute ? decodeSegment(segments[1] ?? "") : null;
   const viewFor = (): string | null => {
-    if (pathView === "projects") return "contexts";
+    if (projectView) return "contexts";
     if (sessionRoute) return "chats";
     return pathView;
   };
@@ -60,7 +68,7 @@ export function parseDeepLink(
   else if (view === "apps") view = "deploys";
   const itemFor = (): string | null => {
     if (sessionRoute) return null;
-    if (pathView === "projects" && projectKind && projectItem) return `${projectKind}:${projectItem}`;
+    if (projectView && projectKind && projectItem) return `${projectKind}:${projectItem}`;
     return projectItem ?? decodeSegment(segments[1] ?? "");
   };
   return {

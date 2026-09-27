@@ -1,4 +1,5 @@
 import { deepLinkPath } from "./deep-link.ts";
+import { accountantMode, canView, isView } from "./shell-state.ts";
 
 export interface ResourceHit {
   title: string;
@@ -21,7 +22,7 @@ const labels: Record<string, string> = {
   crons: "Crons",
   deploys: "Apps",
   webhooks: "Webhooks",
-  contexts: "Projects",
+  contexts: accountantMode() ? "Clients" : "Projects",
 };
 
 export function resourceResults(
@@ -29,19 +30,21 @@ export function resourceResults(
   base: string,
 ): { hits: ResourceHit[]; failed: string[] } {
   return {
-    hits: result.hits.map((hit) => ({
-      title: hit.title,
-      description: hit.snippet,
-      group: labels[hit.kind]!,
-      href: deepLinkPath(
-        base,
-        hit.kind,
-        null,
-        hit.kind === "contexts" ? hit.id : null,
-        hit.kind === "contexts" ? null : hit.id,
-      ),
-    })),
-    failed: result.failed.map((kind) => labels[kind] ?? kind),
+    hits: result.hits
+      .filter((hit) => !isView(hit.kind) || canView(hit.kind))
+      .map((hit) => ({
+        title: hit.title,
+        description: hit.snippet,
+        group: labels[hit.kind]!,
+        href: deepLinkPath(
+          base,
+          hit.kind,
+          null,
+          hit.kind === "contexts" ? hit.id : null,
+          hit.kind === "contexts" ? null : hit.id,
+        ),
+      })),
+    failed: result.failed.filter((kind) => !isView(kind) || canView(kind)).map((kind) => labels[kind] ?? kind),
   };
 }
 

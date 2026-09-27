@@ -27,6 +27,7 @@ import {
 import { tip } from "./tooltip";
 import { isPhone } from "./viewport";
 import { burstEffortConfetti } from "./effort-confetti";
+import { accountantMode } from "./shell-state";
 
 const EFFORT_PEAK_FLOOR = EFFORT_LEVELS.findIndex((option) => option.value === "xhigh");
 
@@ -133,11 +134,15 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
             <span class="loadout-name">${option.label}</span>
             ${isDefault ? html`<span class="loadout-default">my default</span>` : nothing}
           </span>
-          <span class="loadout-details">
-            <span class="loadout-harness">${option.harnessLabel}</span>
-            <span>${effortText(settings.effort)}</span>
-            ${settings.fast ? html`<span class="loadout-bolt" aria-label="Fast">${icon(Zap, 10)}</span>` : nothing}
-          </span>
+          ${
+            accountantMode()
+              ? nothing
+              : html`<span class="loadout-details">
+                  <span class="loadout-harness">${option.harnessLabel}</span>
+                  <span>${effortText(settings.effort)}</span>
+                  ${settings.fast ? html`<span class="loadout-bolt" aria-label="Fast">${icon(Zap, 10)}</span>` : nothing}
+                </span>`
+          }
         </span>
       </button>
       ${
@@ -358,7 +363,8 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                     }}
                   >
                     ${modelGlyph(option)}<span class="menu-option-copy"
-                      ><span>${option.label}</span><span class="loadout-meta">${option.harnessLabel}</span></span
+                      ><span>${option.label}</span
+                      >${accountantMode() ? nothing : html`<span class="loadout-meta">${option.harnessLabel}</span>`}</span
                     ><span class="loadout-add-label" aria-hidden="true">Add</span>
                   </button>`,
               )}
@@ -414,7 +420,8 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
     const open = composerState.openMenu === "loadout";
     const entries = seededLoadout(selected);
     const modelSupportsFast = modelSupportsFastMode(scopeKey(), selected.model.id);
-    const fastAvailable = !!choice && harnessSupportsFastMode(selected.harnessId) && modelSupportsFast;
+    const fastAvailable =
+      !accountantMode() && !!choice && harnessSupportsFastMode(selected.harnessId) && modelSupportsFast;
     const fastUnsupportedReason = modelSupportsFast ? "Not supported by this harness" : "Not supported by this model";
     const fastOn = fastAvailable && effectiveFastMode();
     return html`<div
@@ -467,7 +474,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
         }}
       >
         <span class="menu-label">${choice?.label ?? "Choose model"}</span>
-        ${choice ? html`<span class="menu-suffix">${effortText(composerState.effortLevel)}</span>` : nothing}
+        ${choice && !accountantMode() ? html`<span class="menu-suffix">${effortText(composerState.effortLevel)}</span>` : nothing}
         ${fastOn ? html`<span class="loadout-bolt">${icon(Zap, 13)}</span>` : nothing}${icon(ChevronDown, 13)}
       </button>
       ${
@@ -494,41 +501,45 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
               <div class="loadout-panel">
                 <div class="loadout-head">Presets</div>
                 <div class="loadout-list">${entries.map((entry) => loadoutRow(entry, selected, agent))}</div>
-                <div
-                  class="loadout-submenu-anchor"
-                  ${tip(entries.length >= LOADOUT_CAP ? "Remove a preset to add another." : "")}
-                >
-                  <button
-                    class="loadout-add ${loadoutSection === "add" ? "open" : ""}"
-                    type="button"
-                    role="menuitem"
-                    data-loadout-section="add"
-                    aria-haspopup="menu"
-                    aria-expanded=${loadoutSection === "add" ? "true" : "false"}
-                    ?disabled=${entries.length >= LOADOUT_CAP}
-                    @mouseenter=${() => {
+                ${
+                  accountantMode()
+                    ? nothing
+                    : html`<div
+                        class="loadout-submenu-anchor"
+                        ${tip(entries.length >= LOADOUT_CAP ? "Remove a preset to add another." : "")}
+                      >
+                        <button
+                          class="loadout-add ${loadoutSection === "add" ? "open" : ""}"
+                          type="button"
+                          role="menuitem"
+                          data-loadout-section="add"
+                          aria-haspopup="menu"
+                          aria-expanded=${loadoutSection === "add" ? "true" : "false"}
+                          ?disabled=${entries.length >= LOADOUT_CAP}
+                          @mouseenter=${() => {
                       if (isPhone() || entries.length >= LOADOUT_CAP) return;
                       loadoutSectionHovered = true;
                       openLoadoutSection("add");
                     }}
-                    @keydown=${(e: KeyboardEvent) => {
+                          @keydown=${(e: KeyboardEvent) => {
                       if (e.key === "ArrowRight") {
                         e.preventDefault();
                         loadoutSectionHovered = false;
                         openLoadoutSection("add", true);
                       }
                     }}
-                    @click=${(e: MouseEvent) => {
+                          @click=${(e: MouseEvent) => {
                       loadoutSectionHovered = e.detail !== 0 && !isPhone();
                       openLoadoutSection("add", e.detail === 0);
                     }}
-                  >
-                    <span class="loadout-icon" aria-hidden="true">${icon(Plus, 16)}</span><span>Add models</span
-                    ><span class="loadout-end">${icon(ChevronRight, 14)}</span>
-                  </button>
-                </div>
+                        >
+                          <span class="loadout-icon" aria-hidden="true">${icon(Plus, 16)}</span><span>Add models</span
+                          ><span class="loadout-end">${icon(ChevronRight, 14)}</span>
+                        </button>
+                      </div>`
+                }
                 ${
-                  choice
+                  choice && !accountantMode()
                     ? html`<div class="loadout-divider"></div>
                         ${loadoutHarnessControl(selected)}
                         ${

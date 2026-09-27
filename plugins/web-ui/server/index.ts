@@ -1753,6 +1753,51 @@ const apiRoutes: readonly WebRoute[] = [
   },
   {
     method: "GET",
+    path: "/api/scope-apps",
+    handle: async (c) => {
+      const { res, url } = c;
+      const scopeId = url.searchParams.get("scopeId");
+      if (!scopeId) return json(res, 400, { error: "bad_request", message: "scopeId required" });
+      return relayCore(res, "GET", `/v1/scope-apps?scopeId=${encodeURIComponent(scopeId)}`);
+    },
+  },
+  {
+    method: "PUT",
+    path: "/api/scope-apps",
+    handle: async (c) => {
+      const { req, res } = c;
+      const body = await readJson<{ scopeId?: unknown; toolkits?: unknown }>(req, res, false);
+      if (!body) return;
+      const toolkits = Array.isArray(body.toolkits)
+        ? body.toolkits.filter((t): t is string => typeof t === "string")
+        : null;
+      if (typeof body.scopeId !== "string" || !body.scopeId || !toolkits)
+        return json(res, 400, { error: "bad_request", message: "scopeId and toolkits required" });
+      return relayCore(res, "PUT", "/v1/scope-apps", JSON.stringify({ scopeId: body.scopeId, toolkits }));
+    },
+  },
+  {
+    method: "GET",
+    path: "/api/mcp-servers",
+    handle: async (c) => relayCap(c.res, "GET", "/v1/admin/mcp-servers"),
+  },
+  {
+    method: "PUT",
+    path: "/api/mcp-servers/:id",
+    handle: async (c) => {
+      const { req, res } = c;
+      const body = await readJson<Record<string, unknown>>(req, res, false);
+      if (!body) return;
+      return relayCap(res, "PUT", `/v1/admin/mcp-servers/${encodeURIComponent(c.params.id!)}`, JSON.stringify(body));
+    },
+  },
+  {
+    method: "DELETE",
+    path: "/api/mcp-servers/:id",
+    handle: async (c) => relayCap(c.res, "DELETE", `/v1/admin/mcp-servers/${encodeURIComponent(c.params.id!)}`),
+  },
+  {
+    method: "GET",
     path: "/api/channel-header-pin",
     handle: async (c) => {
       const { res, url, user } = c;

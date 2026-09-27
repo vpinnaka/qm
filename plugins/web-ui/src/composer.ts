@@ -50,6 +50,7 @@ import { modelSupportsFastMode } from "./pi-models";
 import type { ComposerSurface, ConvCtx } from "./conv-types";
 import { bumpSessionActivity, dropPendingSession, renderList } from "./sessions";
 import { appState } from "./shell";
+import { accountantMode } from "./shell-state";
 import { base64ToText, bytesToBase64, insertIntoDraft, pasteChipLabel } from "./paste-text";
 import { clearDraft, newChatDraftKey, saveDraft } from "./drafts";
 import { tip } from "./tooltip";
@@ -510,7 +511,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
             ariaLabel: "Replacement model",
             value: "",
             options: html`<option value="" selected>Select a model…</option>
-              ${getModelOptions(scopeKey()).map((option) => html`<option value=${option.value}>${option.harnessLabel} · ${option.label}</option>`)}`,
+              ${getModelOptions(scopeKey()).map((option) => html`<option value=${option.value}>${accountantMode() ? option.label : `${option.harnessLabel} · ${option.label}`}</option>`)}`,
             onChange: async (value) => {
               const option = modelOptionFor(value, scopeKey());
               if (!option) return;
@@ -564,7 +565,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       >
         ${header} ${slashMenu(agent)}
         ${
-          !options.prepareSubmit && activeRuntimeConfig?.upgradeAvailable
+          !accountantMode() && !options.prepareSubmit && activeRuntimeConfig?.upgradeAvailable
             ? html`<div class="runtime-upgrade">
                 <span
                   >The org now recommends
@@ -1106,7 +1107,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
 
   function currentSlashMenu(): { open: boolean; loading: boolean; matches: SkillMatch[] } {
     const query = slashQuery(composerState.draft);
-    if (query === null || composerState.slashDismissed) return { open: false, loading: false, matches: [] };
+    if (accountantMode() || query === null || composerState.slashDismissed)
+      return { open: false, loading: false, matches: [] };
     const loading = skillsLoading;
     const matches = skillsCache ? matchSkills(query, skillsCache) : [];
     return { open: loading || matches.length > 0, loading, matches };
@@ -1117,7 +1119,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
   }
 
   async function loadSkills(agent: Agent): Promise<void> {
-    if (skillsLoading || skillsCache !== null) return;
+    if (accountantMode() || skillsLoading || skillsCache !== null) return;
     skillsLoading = true;
     ctx.chat.drawActiveChat(agent);
     try {

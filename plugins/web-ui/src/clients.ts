@@ -1,15 +1,16 @@
 import { html, nothing, render, type TemplateResult } from "lit";
-import { Building2, UserPlus, X } from "lucide";
+import { Building2, ExternalLink, UserPlus, X } from "lucide";
 import { errMessage } from "../../chassis/src/errors";
 import { clientBrief, clientFacts, EMPTY_CLIENT_PROFILE, type ClientProfile } from "./client-brief";
 import { api } from "./core-bridge";
-import { contextsState, ensureContexts } from "./contexts";
+import { contextsState, ensureContexts, openProjectDetail } from "./contexts";
 import { fieldSelect, icon, menuSelect } from "./ui";
 import type { SuggestedActivity } from "../../chassis/src/suggested-activities.ts";
 
 const ACTIVE_CLIENT_KEY = "qm.activeClient";
 const CLIENT_SUMMARY_KEY = "qm.clientSummaries";
 const ONBOARD_VALUE = "__onboard__";
+const OPEN_PAGE_VALUE = "__open__";
 
 export interface ClientEntry {
   scopeId: string;
@@ -142,11 +143,16 @@ export function clientSwitcher(): TemplateResult {
       className: "client-select",
       onSelect: (value) => {
         if (value === ONBOARD_VALUE) openOnboardClient();
-        else setActiveClient(value);
+        else if (value === OPEN_PAGE_VALUE) {
+          if (scope) openProjectDetail(scope);
+        } else setActiveClient(value);
       },
       options: [
         { value: null, label: "All clients", glyph: Building2 },
         ...clients.map((c) => ({ value: c.scopeId, label: c.name, glyph: Building2 })),
+        ...(scope && clients.some((c) => c.scopeId === scope)
+          ? [{ value: OPEN_PAGE_VALUE, label: "Open client page", glyph: ExternalLink }]
+          : []),
         { value: ONBOARD_VALUE, label: "Onboard new client", glyph: UserPlus },
       ],
     })}
@@ -210,7 +216,8 @@ async function submitOnboardClient(event: SubmitEvent): Promise<void> {
     onboardOpen = false;
     onboardSaving = false;
     drawClientOverlay();
-    setActiveClient(scopeId);
+    setActiveClient(scopeId, false);
+    openProjectDetail(scopeId);
   } catch (error) {
     onboardSaving = false;
     onboardError = errMessage(error, "Couldn't onboard that client.");

@@ -24,10 +24,12 @@ import {
   type CoreSession,
   fileContentUrl,
 } from "./core-bridge";
-import { UI_BASE } from "./deep-link";
+import { UI_BASE, WEB_PROJECT_SCOPE_PREFIX } from "./deep-link";
 import { errMessage } from "../../chassis/src/errors";
 import { actionSnippet, fieldSelect, formatBytes, icon, initials, menuSelect, relTime } from "./ui";
 import { appState, replacePanePreservingFocus, switchView, syncUrlFromState } from "./shell";
+import { accountantMode } from "./shell-state";
+import { clientPanelsSection, loadClientPanels, resetClientPanels } from "./client-panels";
 import { startNewChat } from "./sessions";
 import { groupDmTitle, openSession, refreshSessions, sessionsState, slackLogo, surfaceOf } from "./sessions";
 import { activityOf } from "./session-list";
@@ -183,9 +185,12 @@ export async function renderContexts(): Promise<void> {
     contextsState.resourcesScope !== contextsState.selected
   ) {
     void loadScopeResources(contextsState.selected);
-    void loadAmbientPolicy(contextsState.selected, drawContexts);
-    void loadContextModel(contextsState.selected, drawContexts);
-    void loadChannelHeader(contextsState.selected, drawContexts);
+    if (accountantMode()) void loadClientPanels(contextsState.selected, drawContexts);
+    else {
+      void loadAmbientPolicy(contextsState.selected, drawContexts);
+      void loadContextModel(contextsState.selected, drawContexts);
+      void loadChannelHeader(contextsState.selected, drawContexts);
+    }
   }
   drawContexts();
 }
@@ -234,6 +239,8 @@ export function resolveProjectScope(contexts: readonly CoreContext[], slug: stri
   if (slug.startsWith("channel:") || slug.startsWith("group:")) {
     return contexts.some((context) => context.scopeId === slug) ? slug : null;
   }
+  const webProject = `${WEB_PROJECT_SCOPE_PREFIX}${slug}`;
+  if (contexts.some((context) => context.scopeId === webProject)) return webProject;
   const normalized = slug.toLowerCase();
   const matches = contexts.filter((context) => {
     const match = /^personal:([^@]+)@/.exec(context.scopeId);
@@ -308,6 +315,7 @@ function gridTpl(): TemplateResult {
   const q = contextsQuery.trim().toLowerCase();
   const matches = (context: CoreContext) => {
     const meta = contextMeta(context);
+    if (accountantMode() && !context.project) return false;
     return (
       (!q || `${meta.title} ${meta.sub}`.toLowerCase().includes(q)) &&
       (contextsWorkspaceFilter === "all" ||
@@ -335,39 +343,51 @@ function gridTpl(): TemplateResult {
       ${groups.map(
         (g) =>
           html`<section class="project-group">
-            <div class="project-group-head">
-              ${g.label} <span class="project-group-count">· ${g.items.length}</span>
-            </div>
+            ${
+              accountantMode()
+                ? nothing
+                : html`<div class="project-group-head">
+                    ${g.label} <span class="project-group-count">· ${g.items.length}</span>
+                  </div>`
+            }
             ${g.items.map(contextRow)}
           </section>`,
       )}
     </div>`;
   else if (!contextsLoading) {
     projectList = html`<div class="empty compact project-empty">
-      ${projectsFiltered ? "No projects match your search." : "No projects yet."}
+      ${
+        accountantMode()
+          ? projectsFiltered
+            ? "No clients match your search."
+            : "No clients yet. Onboard your first one."
+          : projectsFiltered
+            ? "No projects match your search."
+            : "No projects yet."
+      }
     </div>`;
   }
   return html`
     <div class="project-grid-content">
       <div class="list-page-head">
-        <h1 class="pane-title">Projects</h1>
+        <h1 class="pane-title">${accountantMode() ? "Clients" : "Projects"}</h1>
         <div class="list-page-actions">
           <button
             class="btn primary project-create-button"
             type="button"
-            aria-label="New project"
-            @click=${openCreateProject}
+            aria-label=${accountantMode() ? "Onboard a new client" : "New project"}
+            @click=${accountantMode() ? openOnboardClientDialog : openCreateProject}
           >
-            ${icon(FolderPlus, 15)}<span>New project</span>
+            ${icon(FolderPlus, 15)}<span>${accountantMode() ? "New client" : "New project"}</span>
           </button>
         </div>
         <label class="list-search"
-          >${icon(Search, 16)}<span class="sr-only">Search projects</span
+          >${icon(Search, 16)}<span class="sr-only">${accountantMode() ? "Search clients" : "Search projects"}</span
           ><input
             data-focus-key="contexts-search"
             type="search"
-            aria-label="Search projects"
-            placeholder="Search projects…"
+            aria-label=${accountantMode() ? "Search clients" : "Search projects"}
+            placeholder=${accountantMode() ? "Search clients…" : "Search projects…"}
             .value=${contextsQuery}
             @input=${(event: InputEvent) => {
               contextsQuery = (event.currentTarget as HTMLInputElement).value;
@@ -413,11 +433,12 @@ function contextRow(c: CoreContext): TemplateResult {
 function detailTpl(c: CoreContext): TemplateResult {
   const { title, sub, glyph } = contextMeta(c);
   const sessions = sessionsIn(c.scopeId);
-  const completelyEmpty = sessions.length === 0 && scopeResourcesEmpty(c.scopeId);
+  const completelyEmpty = !accountantMode() && sessions.length === 0 && scopeResourcesEmpty(c.scopeId);
+  const settingsLabel = accountantMode() ? "Client settings" : c.project ? "Project settings" : "Context settings";
   return html`
     <div class="context-detail">
       <button class="context-back" type="button" @click=${() => selectContext(null)}>
-        ${icon(ArrowLeft, 15)}<span>Projects</span>
+        ${icon(ArrowLeft, 15)}<span>${accountantMode() ? "Clients" : "Projects"}</span>
       </button>
       <div class="context-detail-head">
         <span class="context-glyph large">${icon(glyph, 22)}</span>
@@ -469,13 +490,18 @@ function detailTpl(c: CoreContext): TemplateResult {
                         : html`<div class="context-inline-empty">No conversations yet.</div>`
                     }
                   </section>
-                  ${resourceSections(c.scopeId)}
+                  ${accountantMode() ? clientPanelsSection(c.scopeId) : resourceSections(c.scopeId)}
                 `
           }
         </div>
-        <aside class="context-settings" aria-label=${c.project ? "Project settings" : "Context settings"}>
+        <aside class="context-settings" aria-label=${settingsLabel}>
           ${c.project ? projectMembersSection(c) : nothing} ${c.project ? projectSlackSection(c) : nothing}
-          ${contextModelSection(c.scopeId)} ${channelHeaderSection(c.scopeId)} ${ambientPolicySection(c.scopeId)}
+          ${
+            accountantMode()
+              ? nothing
+              : html`${contextModelSection(c.scopeId)} ${channelHeaderSection(c.scopeId)}
+                ${ambientPolicySection(c.scopeId)}`
+          }
         </aside>
       </div>
     </div>
@@ -1413,14 +1439,22 @@ function selectContext(scopeId: string | null): void {
   resetAmbientPolicy();
   resetContextModel();
   resetChannelHeader();
+  resetClientPanels();
   syncUrlFromState();
   drawContexts();
   if (scopeId) {
     void loadScopeResources(scopeId);
-    void loadAmbientPolicy(scopeId, drawContexts);
-    void loadContextModel(scopeId, drawContexts);
-    void loadChannelHeader(scopeId, drawContexts);
+    if (accountantMode()) void loadClientPanels(scopeId, drawContexts);
+    else {
+      void loadAmbientPolicy(scopeId, drawContexts);
+      void loadContextModel(scopeId, drawContexts);
+      void loadChannelHeader(scopeId, drawContexts);
+    }
   }
+}
+
+function openOnboardClientDialog(): void {
+  void import("./clients").then((m) => m.openOnboardClient());
 }
 
 function startChatIn(c: CoreContext): void {
