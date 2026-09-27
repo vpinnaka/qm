@@ -4,16 +4,16 @@ A fork of QM for accountants who manage many clients. Each client gets its own w
 
 ## What changed
 
-| Area | Change | Where |
-| --- | --- | --- |
-| Client switcher | A Client menu in the web UI header lists clients (QM web Projects) and switches between them. The active client scopes the chat, sessions and memory. | `plugins/web-ui/src/clients.ts`, `shell.ts`, `sessions.ts` |
-| Client onboarding | The "Onboard new client" dialog captures entity, industry, chart of accounts, vendor rules and close preferences. It saves the brief as the project's SOUL (`POST /v1/soul`) and seeds the client's memory. | `plugins/web-ui/src/client-brief.ts`, `plugins/web-ui/server/index.ts` |
-| Tailored chat | The greeting and suggestion chips come from the active client's brief. | `plugins/web-ui/src/chat.ts` |
-| Finance welcome copy | The first-run welcome text is rewritten for bookkeeping practices. | `plugins/web-ui/src/onboarding-welcome.ts` |
-| Per-client memory | A hosted gbrain adapter gives one gbrain entity per client (`client-<scope>`), so recall can never cross clients. Isolation proof: 7/7 pass. | `hackathon/gbrain-adapter/`, [README-memory.md](README-memory.md) |
-| Bring your own subscription | Users can connect their own ChatGPT/Codex and Claude subscriptions under Settings → AI access. Org custom models like River stay in the same picker and run on company access. | `src/api/runtime-config.ts`, `src/core/orchestrator.ts` |
-| Bookkeeper LoRA | A rank-32 LoRA on `Qwen/Qwen3.5-9B`, trained on River, served as the OpenAI-compatible model `ledgerloop-bookkeeper`. Eval: 96% vs 78% for the base model. | `hackathon/river/`, [river/README.md](river/README.md), [river/EVAL.md](river/EVAL.md) |
-| All-in-one image | One container runs Postgres, the River proxy, the gbrain adapter, QM core, the web UI and a password login front door. | `Dockerfile`, `hackathon/agent37/` |
+| Area                        | Change                                                                                                                                                                                                      | Where                                                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Client switcher             | A Client menu in the web UI header lists clients (QM web Projects) and switches between them. The active client scopes the chat, sessions and memory.                                                       | `plugins/web-ui/src/clients.ts`, `shell.ts`, `sessions.ts`                             |
+| Client onboarding           | The "Onboard new client" dialog captures entity, industry, chart of accounts, vendor rules and close preferences. It saves the brief as the project's SOUL (`POST /v1/soul`) and seeds the client's memory. | `plugins/web-ui/src/client-brief.ts`, `plugins/web-ui/server/index.ts`                 |
+| Tailored chat               | The greeting and suggestion chips come from the active client's brief.                                                                                                                                      | `plugins/web-ui/src/chat.ts`                                                           |
+| Finance welcome copy        | The first-run welcome text is rewritten for bookkeeping practices.                                                                                                                                          | `plugins/web-ui/src/onboarding-welcome.ts`                                             |
+| Per-client memory           | A hosted gbrain adapter gives one gbrain entity per client (`client-<scope>`), so recall can never cross clients. Isolation proof: 7/7 pass.                                                                | `hackathon/gbrain-adapter/`, [README-memory.md](README-memory.md)                      |
+| Bring your own subscription | Users can connect their own ChatGPT/Codex and Claude subscriptions under Settings → AI access. Org custom models like River stay in the same picker and run on company access.                              | `src/api/runtime-config.ts`, `src/core/orchestrator.ts`                                |
+| Bookkeeper LoRA             | A rank-32 LoRA on `Qwen/Qwen3.5-9B`, trained on River, served as the OpenAI-compatible model `ledgerloop-bookkeeper`. Eval: 96% vs 78% for the base model.                                                  | `hackathon/river/`, [river/README.md](river/README.md), [river/EVAL.md](river/EVAL.md) |
+| All-in-one image            | One container runs Postgres, the River proxy, the gbrain adapter, QM core, the web UI and a password login front door.                                                                                      | `Dockerfile`, `hackathon/agent37/`                                                     |
 
 ## Run locally (all-in-one container)
 
@@ -39,13 +39,13 @@ Open `http://localhost:18000/signin` and sign in as `demo@ledgerloop.dev` with `
 
 Ports inside the container:
 
-| Port | Service |
-| --- | --- |
+| Port | Service                                                               |
+| ---- | --------------------------------------------------------------------- |
 | 8000 | Login front door (`hackathon/agent37/front.ts`), the only public port |
-| 8001 | QM web UI |
-| 8080 | QM core |
-| 8788 | River proxy (`ledgerloop-bookkeeper`) |
-| 8789 | gbrain memory adapter |
+| 8001 | QM web UI                                                             |
+| 8080 | QM core                                                               |
+| 8788 | River proxy (`ledgerloop-bookkeeper`)                                 |
+| 8789 | gbrain memory adapter                                                 |
 
 Postgres data lives under `/home/node/qm/pg`, so clients and sessions survive a `docker restart`. Nothing is seeded into gbrain on boot. Clients (and their memory) are created only through the onboarding dialog.
 
@@ -53,13 +53,13 @@ Postgres data lives under `/home/node/qm/pg`, so clients and sessions survive a 
 
 Secrets are env files outside the repo and are never committed:
 
-| File | Vars |
-| --- | --- |
-| `~/.config/agent37/qm-login.env` | `LOGIN_PASSWORD` |
-| `~/.config/gbrain/.env` | `GBRAIN_HOSTED_URL`, `GBRAIN_HOSTED_TOKEN`, `GBRAIN_SEED_TOKEN` |
-| `.env.river` | `RIVER_API_KEY` |
-| `river/.env.proxy` | `PROXY_API_KEY` |
-| `~/.config/agent37/.env` | `AGENT37_API_KEY` (cloud deploy only) |
+| File                             | Vars                                                            |
+| -------------------------------- | --------------------------------------------------------------- |
+| `~/.config/agent37/qm-login.env` | `LOGIN_PASSWORD`                                                |
+| `~/.config/gbrain/.env`          | `GBRAIN_HOSTED_URL`, `GBRAIN_HOSTED_TOKEN`, `GBRAIN_SEED_TOKEN` |
+| `.env.river`                     | `RIVER_API_KEY`                                                 |
+| `river/.env.proxy`               | `PROXY_API_KEY`                                                 |
+| `~/.config/agent37/.env`         | `AGENT37_API_KEY` (cloud deploy only)                           |
 
 ## Demo flow
 
