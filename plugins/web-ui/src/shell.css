@@ -12919,3 +12919,72 @@ body.app-edit-embed .custom-chat-shell.app-edit-chat > .chat-bottom-dock {
 .client-field textarea {
   resize: vertical;
 }
+.client-brief-text {
+  max-height: 320px;
+  margin: 12px 0 0;
+  overflow: auto;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.client-brief-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12.5px;
+  resize: vertical;
+}
+.client-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.client-panel-status {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 12.5px;
+}
+.client-app-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+.client-app-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.client-app-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.client-app-url {
+  flex: 1;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.client-mcp-add {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.client-apps-panel .client-app-name {
+  flex: 1;
+}

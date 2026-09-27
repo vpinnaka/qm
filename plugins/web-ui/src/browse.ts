@@ -5,7 +5,7 @@ import { nextGridIndex } from "./grid-nav";
 import { setScopedSession } from "./session-scope";
 import { ADMIN_HOME_URL, appState, can, switchView } from "./shell";
 import { icon } from "./ui";
-import type { View } from "./shell-state";
+import { accountantMode, canView, type View } from "./shell-state";
 
 interface Destination {
   view: View | null;
@@ -30,7 +30,9 @@ export function destinations(): Destination[] {
     blurb,
   });
   const list: Destination[] = [
-    to("contexts", Folder, "Projects", "Group chats, files, and automations"),
+    accountantMode()
+      ? to("contexts", Folder, "Clients", "Each client's brief, apps, and conversations")
+      : to("contexts", Folder, "Projects", "Group chats, files, and automations"),
     to("files", Files, "Files", "Everything you and QM have shared"),
     to("crons", Clock, "Crons", "Work that runs on a schedule"),
     to("webhooks", Webhook, "Webhooks", "Inbound events that wake QM"),
@@ -40,8 +42,9 @@ export function destinations(): Destination[] {
     to("skills", Box, "Skills", "Reusable procedures QM can follow"),
   ];
   if (can("loops")) list.push(to("loops", Repeat, "Loops", "Standing work QM keeps pushing forward"));
+  const visible = list.filter((destination) => destination.view === null || canView(destination.view));
   if (can("admin")) {
-    list.push({
+    visible.push({
       view: null,
       href: ADMIN_HOME_URL,
       glyph: ShieldUser,
@@ -49,7 +52,7 @@ export function destinations(): Destination[] {
       blurb: "Org settings, people, and policy",
     });
   }
-  return list;
+  return visible;
 }
 
 export function openBrowse(): void {

@@ -6,7 +6,8 @@ test("draft is the first editable chat message and Send it submits the combined 
   const { dom, vite, host, close } = await createInboxFixture();
   try {
     await vite.ssrLoadModule("/src/shell.ts");
-    const { appState } = await vite.ssrLoadModule("/src/shell-state.ts");
+    const { appState, setAccountantMode } = await vite.ssrLoadModule("/src/shell-state.ts");
+    setAccountantMode(false);
     appState.me = { user: "taylor@example.com" };
     const { chatTpl, toInboxItem, inboxState, resetInboxState } = await vite.ssrLoadModule("/src/inbox.ts");
     const { render } = await vite.ssrLoadModule("lit");

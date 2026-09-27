@@ -51,7 +51,8 @@ test("AI account modal interactions", async (t) => {
     ],
   });
   const { openModelConnectManager, renderModelConnectGate } = await vite.ssrLoadModule("/src/model-connect.ts");
-  const { appState } = await vite.ssrLoadModule("/src/shell-state.ts");
+  const { appState, setAccountantMode } = await vite.ssrLoadModule("/src/shell-state.ts");
+  setAccountantMode(false);
   appState.me = { user: "alice", org: "acme" };
   const doc = dom.window.document;
   const status = (account = "company", connections: { provider: string; kind: string }[] = []) => ({

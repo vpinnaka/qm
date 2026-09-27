@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { appState, can, canView } from "../src/shell-state.ts";
+import { appState, can, canView, setAccountantMode } from "../src/shell-state.ts";
+
+setAccountantMode(false);
 
 test("can(key) is false before /me loads", () => {
   appState.me = null;

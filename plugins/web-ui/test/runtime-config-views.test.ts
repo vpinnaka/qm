@@ -61,7 +61,8 @@ test("runtime defaults are shared while pane choices and editor drafts remain lo
   let resetPanel: (() => void) | undefined;
   try {
     await vite.ssrLoadModule("/src/shell.ts");
-    const { appState } = await vite.ssrLoadModule("/src/shell-state.ts");
+    const { appState, setAccountantMode } = await vite.ssrLoadModule("/src/shell-state.ts");
+    setAccountantMode(false);
     const { createComposerSurface } = await vite.ssrLoadModule("/src/composer.ts");
     const { saveRuntimeConfig, loadRuntimeConfig, seedRuntimeConfig } =
       await vite.ssrLoadModule("/src/runtime-config-store.ts");

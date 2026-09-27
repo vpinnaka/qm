@@ -37,6 +37,29 @@ const VIEWS = [
 ] as const;
 export type View = (typeof VIEWS)[number];
 
+export const ACCOUNTANT_MODE = true;
+
+let accountantOn: boolean = ACCOUNTANT_MODE;
+
+export function accountantMode(): boolean {
+  return accountantOn;
+}
+
+export function setAccountantMode(on: boolean): void {
+  accountantOn = on;
+}
+
+const ACCOUNTANT_HIDDEN_VIEWS: readonly View[] = [
+  "webhooks",
+  "crons",
+  "loops",
+  "files",
+  "keychain",
+  "deploys",
+  "memory",
+  "skills",
+];
+
 export function isView(view: string | null | undefined): view is View {
   return (VIEWS as readonly (string | null | undefined)[]).includes(view);
 }
@@ -55,6 +78,7 @@ export function can(key: string): boolean {
 }
 
 export function canView(view: View): boolean {
+  if (accountantOn && ACCOUNTANT_HIDDEN_VIEWS.includes(view)) return false;
   if (view === "loops") return can("loops");
   if (view === "inbox" || view === "calendar") return can("inbox");
   return true;

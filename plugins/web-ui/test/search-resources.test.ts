@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resourceResults, matchResources } from "../src/search-resources.ts";
+import { setAccountantMode } from "../src/shell-state.ts";
+
+setAccountantMode(false);
 
 test("compact server results link to each resource without downloading lists", () => {
   const result = resourceResults(
