@@ -189,6 +189,7 @@ import { decorateTextCodeBlocks } from "./text-code";
 
 import { createTranscriptViewport } from "./transcript-viewport";
 import { suggestedActivities } from "./suggested-activities";
+import { activeClientName, activeClientScope, clientGreeting, clientSuggestions } from "./clients";
 
 installMarkdownSanitizer();
 
@@ -434,7 +435,8 @@ export function createChatSurface(
     if (carried) saveDraft(threadRef, carried);
     ctx.composer.resetComposer();
     forkOriginController.reset();
-    mountContinuable(threadRef, null, context?.scopeId ?? null, [], context?.name ?? null);
+    const scopeId = context?.scopeId ?? activeClientScope();
+    mountContinuable(threadRef, null, scopeId, [], context?.name ?? (scopeId ? activeClientName() : null));
     renderList();
     ctx.composer.focusComposerEnd();
     return threadRef;
@@ -1311,6 +1313,8 @@ export function createChatSurface(
   }
 
   function chatCta(): string {
+    const clientCta = clientGreeting(chatState.scopeId);
+    if (clientCta) return clientCta;
     if (chatState.threadRef !== ctaThreadRef) {
       ctaThreadRef = chatState.threadRef;
       ctaText = nextChatCta();
@@ -1463,6 +1467,7 @@ export function createChatSurface(
     const tier = ctx.density();
     const glanceTier = tier === "card" || tier === "strip" ? tier : null;
     const emptyChat = !messages.length && (showWelcome || !chatState.forkSession);
+    const clientChips = clientSuggestions(chatState.scopeId);
     const showSuggestions =
       emptyChat &&
       !editingApp &&
@@ -1470,11 +1475,11 @@ export function createChatSurface(
       !glanceTier &&
       (!ctx.pane || tier === "full") &&
       !chatState.sessionId &&
-      (chatState.scopeId === null || chatState.scopeId === `personal:${appState.me?.user}`) &&
+      (clientChips !== null || chatState.scopeId === null || chatState.scopeId === `personal:${appState.me?.user}`) &&
       !agent.state.isStreaming;
     const suggestions = showSuggestions
       ? suggestedActivities(
-          appState.me?.suggestedActivities,
+          clientChips ?? appState.me?.suggestedActivities,
           (activity) => ctx.composer.fillSuggestedPrompt(activity.prompt, agent),
           Boolean(
             ctx.composer.state.draft || ctx.composer.state.attachments.length || ctx.composer.state.processingFiles,

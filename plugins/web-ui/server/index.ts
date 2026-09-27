@@ -19,6 +19,7 @@ import {
   CAPABILITY_HEADER,
   type HttpMethod,
 } from "../../chassis/src/core-client.ts";
+import { errMessage } from "../../chassis/src/errors.ts";
 import { findRoute } from "../../chassis/src/router.ts";
 import {
   json,
@@ -1701,6 +1702,53 @@ const apiRoutes: readonly WebRoute[] = [
       if (!body) return;
       const scopeId = typeof body.scopeId === "string" && body.scopeId ? body.scopeId : `personal:${user}`;
       return relayCore(res, "PUT", "/v1/runtime-config", JSON.stringify({ ...body, principalId: user, scopeId }));
+    },
+  },
+  {
+    method: "GET",
+    path: "/api/soul",
+    handle: async (c) => {
+      const { res, url, user } = c;
+      const scopeId = url.searchParams.get("scopeId") || `personal:${user}`;
+      return relayCore(res, "GET", `/v1/soul?scopeId=${encodeURIComponent(scopeId)}`);
+    },
+  },
+  {
+    method: "POST",
+    path: "/api/soul",
+    handle: async (c) => {
+      const { req, res, user } = c;
+      const body = await readJson<{ scopeId?: unknown; content?: unknown }>(req, res);
+      if (!body) return;
+      if (typeof body.content !== "string")
+        return json(res, 400, { error: "bad_request", message: "content required" });
+      const scopeId = typeof body.scopeId === "string" && body.scopeId ? body.scopeId : `personal:${user}`;
+      return relayCore(res, "POST", "/v1/soul", JSON.stringify({ scopeId, content: body.content, actorId: user }));
+    },
+  },
+  {
+    method: "POST",
+    path: "/api/clients/seed",
+    handle: async (c) => {
+      const { req, res } = c;
+      const body = await readJson<{ scopeId?: unknown; clientName?: unknown; facts?: unknown }>(req, res);
+      if (!body) return;
+      const seedUrl = process.env.GBRAIN_SEED_URL;
+      const seedToken = process.env.GBRAIN_SEED_TOKEN;
+      if (!seedUrl || !seedToken) return json(res, 200, { seeded: false, reason: "not_configured" });
+      const facts = Array.isArray(body.facts) ? body.facts.filter((f): f is string => typeof f === "string") : [];
+      if (typeof body.scopeId !== "string" || typeof body.clientName !== "string" || !facts.length)
+        return json(res, 400, { error: "bad_request", message: "scopeId, clientName, facts required" });
+      try {
+        const upstream = await fetch(seedUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${seedToken}` },
+          body: JSON.stringify({ scopeId: body.scopeId, clientName: body.clientName, facts }),
+        });
+        return json(res, upstream.ok ? 200 : 502, { seeded: upstream.ok, status: upstream.status });
+      } catch (e) {
+        return json(res, 502, { seeded: false, reason: errMessage(e) });
+      }
     },
   },
   {

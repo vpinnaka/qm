@@ -79,6 +79,7 @@ import {
   renameProject,
   scopeChip,
 } from "./contexts";
+import { activeClientScope } from "./clients";
 import { groupDmLabel, groupDmText } from "./group-dm-label";
 import { transcriptModel } from "./model-options";
 import { appState, closeSidebarOnNarrowView, renderSidebarTop, syncDocumentTitle, syncUrlFromState } from "./shell";
@@ -320,7 +321,9 @@ export function slackLogo(size = 13): TemplateResult {
 
 function visibleSessions(): CoreSession[] {
   const sorted = sidebarSessions(sessionsState.list).sort((a, b) => activityOf(b) - activityOf(a));
-  return sessionsState.webOnly ? sorted.filter((s) => surfaceOf(s) === "web") : sorted;
+  const client = activeClientScope();
+  const scoped = client ? sorted.filter((s) => s.scopeId === client) : sorted;
+  return sessionsState.webOnly ? scoped.filter((s) => surfaceOf(s) === "web") : scoped;
 }
 
 export function renderList(): void {
@@ -544,7 +547,7 @@ export function startNewChat(
 
 export function startNewChatInLastScope(): void {
   const mounted = (focusedPaneConversation() ?? mainConversation()).state;
-  const scopeId = mounted.scopeId ?? visibleSessions().find((s) => !s.archived)?.scopeId ?? null;
+  const scopeId = activeClientScope() ?? mounted.scopeId ?? visibleSessions().find((s) => !s.archived)?.scopeId ?? null;
   startNewChat(scopeId, scopeId ? projectName(scopeId) : null);
 }
 
