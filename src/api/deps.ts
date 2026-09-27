@@ -77,12 +77,14 @@ import type { AdvisoryLock } from "../persistence/advisory-lock.ts";
 import type { SlackInstallationStore, SlackSocketAppIdReader } from "../surfaces/slack-installation.ts";
 
 import type { SlackAccountLink, ComposioReturn } from "./routes/composio.ts";
+import type { ScopeApps } from "./routes/scope-apps.ts";
 
 export interface ServerDeps {
   externalSlackPolicies?: ExternalSlackPolicies;
   checkReadiness?: (signal: AbortSignal) => Promise<void>;
   slackAccounts?: DurableMap<SlackAccountLink>;
   composioReturns?: DurableMap<ComposioReturn>;
+  scopeApps?: DurableMap<ScopeApps>;
   composioFetch?: typeof fetch;
   suggestedActivities?: ReturnType<typeof createSuggestedActivityService>;
   production?: boolean;

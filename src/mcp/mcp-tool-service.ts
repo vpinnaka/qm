@@ -10,7 +10,8 @@ import type { ConnectorTokenStore } from "../credentials/keychain.ts";
 import type { AuditLog } from "../audit/audit-log.ts";
 import { errMessage } from "../util/errors.ts";
 import { createMcpClient, mcpResultText, type McpAuth, type McpClient, type McpFetch } from "./mcp-client.ts";
-import type { McpServer, McpServerStore } from "./mcp-server-store.ts";
+import { mcpServerInScope, type McpServer, type McpServerStore } from "./mcp-server-store.ts";
+import type { ScopeId } from "../types.ts";
 
 const REFRESH_INTERVAL_MS = 5 * 60_000;
 const MAX_TOOLS_PER_SERVER = 64;
@@ -24,13 +25,16 @@ export interface McpToolDescriptor {
   description: string;
   inputSchema: Record<string, unknown>;
   readOnly: boolean;
+  scopes?: ScopeId[];
 }
 
 export interface McpToolService {
-  /** Current snapshot of injectable tools across enabled servers. */
-  toolDefs(): McpToolDescriptor[];
+  /** Current snapshot of injectable tools across the servers reachable from a scope. */
+  toolDefs(scope?: ScopeId): McpToolDescriptor[];
+  /** Every enabled server's tools, including scope-restricted ones (admin views). */
+  allToolDefs(): McpToolDescriptor[];
   /** Call a namespaced tool. Returns the tool's text output (clamped). */
-  call(name: string, args: Record<string, unknown>, principalId?: string): Promise<string>;
+  call(name: string, args: Record<string, unknown>, principalId?: string, scope?: ScopeId): Promise<string>;
   /** Force a registry re-read + tools/list refresh (admin save path, tests). */
   refresh(): Promise<void>;
   /** Probe a server config without persisting it. Returns its tool names. */
@@ -116,6 +120,7 @@ export function createMcpToolService(opts: {
             description: tool.description || `${tool.name} on ${server.name}`,
             inputSchema: tool.inputSchema,
             readOnly: server.readOnly,
+            ...(server.scopes?.length ? { scopes: server.scopes } : {}),
           });
         }
         record("list", server.id, `ok tools=${tools.length}`);
@@ -137,13 +142,17 @@ export function createMcpToolService(opts: {
   timer.unref?.();
   void refresh();
 
+  const visible = (scope?: ScopeId) => snapshot.filter((t) => mcpServerInScope(t, scope));
+
   return {
-    toolDefs: () => snapshot,
-    async call(name, args, principalId) {
-      const def = snapshot.find((t) => t.name === name);
+    toolDefs: (scope) => visible(scope),
+    allToolDefs: () => snapshot,
+    async call(name, args, principalId, scope) {
+      const def = visible(scope).find((t) => t.name === name);
       if (!def) throw new Error(`unknown MCP tool: ${name}`);
       const server = await opts.servers.get(def.serverId);
-      if (!server || !server.enabled) throw new Error(`MCP server ${def.serverId} is not available`);
+      if (!server || !server.enabled || !mcpServerInScope(server, scope))
+        throw new Error(`MCP server ${def.serverId} is not available`);
       try {
         const result = await (await callerClient(server, principalId)).callTool(def.remoteName, args);
         record("call", `${def.serverId}/${def.remoteName}`, "ok", principalId);

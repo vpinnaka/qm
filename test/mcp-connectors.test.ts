@@ -9,6 +9,9 @@ import { createServer } from "node:http";
 import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import { createMemoryMap } from "../src/persistence/durable-map.ts";
+import { createToolContext } from "../src/tools/primitives.ts";
+import type { McpToolService } from "../src/mcp/mcp-tool-service.ts";
+import type { ScopeId } from "../src/types.ts";
 
 function jsonResponse(body: unknown, status = 200, contentType = "application/json") {
   return {
@@ -120,6 +123,81 @@ test("disabled server's tools disappear and calls fail", async () => {
   await store.put(server({ enabled: false }));
   await service.refresh();
   assert.equal(service.toolDefs().length, 0);
+  service.close();
+});
+
+test("scoped servers are invisible and uncallable outside their scopes", async () => {
+  const store = createMcpServerStore(createMemoryMap<McpServer>());
+  const { fetch } = fakeServerFetch();
+  const service = createMcpToolService({ servers: store, fetchImpl: fetch, refreshIntervalMs: 3600_000 });
+  await store.put(server({ id: "shared" }));
+  await store.put(server({ id: "acme", scopes: ["group:web-project-acme"] }));
+  await service.refresh();
+  assert.deepEqual(
+    service
+      .toolDefs("group:web-project-acme")
+      .map((d) => d.name)
+      .sort(),
+    ["acme_query", "acme_update", "shared_query", "shared_update"],
+  );
+  assert.deepEqual(
+    service
+      .toolDefs("group:web-project-other")
+      .map((d) => d.name)
+      .sort(),
+    ["shared_query", "shared_update"],
+  );
+  assert.deepEqual(
+    service
+      .toolDefs()
+      .map((d) => d.name)
+      .sort(),
+    ["shared_query", "shared_update"],
+  );
+  assert.equal(service.allToolDefs().length, 4);
+  assert.equal(await service.call("acme_query", { q: "hi" }, "internal:U1", "group:web-project-acme"), "ran query");
+  await assert.rejects(
+    () => service.call("acme_query", { q: "hi" }, "internal:U1", "group:web-project-other"),
+    /unknown MCP tool/,
+  );
+  await assert.rejects(() => service.call("acme_query", { q: "hi" }, "internal:U1"), /unknown MCP tool/);
+  service.close();
+});
+
+function toolContextFor(mcp: McpToolService, mcpScope: ScopeId) {
+  return createToolContext({
+    sandbox: {} as never,
+    provision: async () => {
+      throw new Error("MCP calls must not provision the sandbox");
+    },
+    layers: [{ scopeId: mcpScope, mountPath: "", mode: "rw" }],
+    commandPolicy: () => ({}) as never,
+    authorizeCommand: () => false,
+    grantedHandles: [],
+    workspace: {} as never,
+    deploy: {} as never,
+    acl: {} as never,
+    createdBy: "internal:U1",
+    mcp,
+    mcpScope,
+  });
+}
+
+test("a turn's tool context sees and calls only the MCP servers attached to its scope", async () => {
+  const store = createMcpServerStore(createMemoryMap<McpServer>());
+  const { fetch } = fakeServerFetch();
+  const service = createMcpToolService({ servers: store, fetchImpl: fetch, refreshIntervalMs: 3600_000 });
+  await store.put(server({ id: "acme", scopes: ["group:web-project-acme"] }));
+  await service.refresh();
+  const acme = toolContextFor(service, "group:web-project-acme");
+  const other = toolContextFor(service, "group:web-project-other");
+  assert.deepEqual(
+    acme.mcpToolDefs().map((d) => d.name),
+    ["acme_query", "acme_update"],
+  );
+  assert.deepEqual(other.mcpToolDefs(), []);
+  assert.equal(await acme.callMcpTool("acme_query", { q: "hi" }), "ran query");
+  await assert.rejects(() => other.callMcpTool("acme_query", { q: "hi" }), /unknown MCP tool/);
   service.close();
 });
 

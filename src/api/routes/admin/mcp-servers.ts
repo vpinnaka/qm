@@ -5,23 +5,37 @@
 // model-provider credential, not like a personal connector.
 
 import { isValidMcpServerId, type McpServer, type McpServerAuthMode } from "../../../mcp/mcp-server-store.ts";
+import { parseScopeId, type ScopeId } from "../../../types.ts";
 import { sendJson } from "../../http.ts";
 import type { ApiCtx } from "../route.ts";
 import { audit, authorizeAdmin, orgScope } from "../shared.ts";
 
 const AUTH_MODES: McpServerAuthMode[] = ["none", "bearer", "client-credentials"];
+const MAX_SCOPES = 200;
+
+function parseScopes(value: unknown, existing?: ScopeId[]): ScopeId[] | "invalid" {
+  if (value === undefined) return existing ?? [];
+  if (!Array.isArray(value) || value.length > MAX_SCOPES) return "invalid";
+  const scopes: ScopeId[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "string" || parseScopeId(entry).kind === null) return "invalid";
+    if (!scopes.includes(entry)) scopes.push(entry);
+  }
+  return scopes;
+}
 
 async function actor(ctx: ApiCtx) {
   const scope = orgScope(ctx.deps);
   return authorizeAdmin(ctx, scope);
 }
 
-function redact(server: McpServer): Omit<McpServer, "bearerToken" | "clientSecret"> & {
+function redact(server: McpServer): Omit<McpServer, "bearerToken" | "clientSecret" | "scopes"> & {
+  scopes: ScopeId[];
   hasBearerToken: boolean;
   hasClientSecret: boolean;
 } {
-  const { bearerToken, clientSecret, ...rest } = server;
-  return { ...rest, hasBearerToken: !!bearerToken, hasClientSecret: !!clientSecret };
+  const { bearerToken, clientSecret, scopes, ...rest } = server;
+  return { ...rest, scopes: scopes ?? [], hasBearerToken: !!bearerToken, hasClientSecret: !!clientSecret };
 }
 
 export async function getMcpServers(ctx: ApiCtx): Promise<void> {
@@ -37,7 +51,7 @@ export async function getMcpServers(ctx: ApiCtx): Promise<void> {
   const servers = await ctx.deps.mcpServers.list();
   return sendJson(ctx.res, 200, {
     servers: servers.map(redact),
-    tools: ctx.deps.mcpToolService?.toolDefs().map(({ name, serverId, description, readOnly }) => ({
+    tools: ctx.deps.mcpToolService?.allToolDefs().map(({ name, serverId, description, readOnly }) => ({
       name,
       serverId,
       description,
@@ -111,6 +125,13 @@ export async function putMcpServer(ctx: ApiCtx): Promise<void> {
       message: "per-user credentials require HTTPS (except loopback)",
     });
   }
+  const scopes = parseScopes(b.scopes, existing?.scopes);
+  if (scopes === "invalid") {
+    return sendJson(ctx.res, 400, {
+      error: "bad_request",
+      message: `scopes must be an array of at most ${MAX_SCOPES} scope ids like group:web-project-<uuid>`,
+    });
+  }
   const server: McpServer = {
     id,
     name: typeof b.name === "string" && b.name.trim() ? b.name.trim().slice(0, 80) : id,
@@ -127,6 +148,7 @@ export async function putMcpServer(ctx: ApiCtx): Promise<void> {
           clientSecret: typeof b.clientSecret === "string" && b.clientSecret ? b.clientSecret : existing?.clientSecret,
         }
       : {}),
+    ...(scopes.length ? { scopes } : {}),
     readOnly: b.readOnly !== false,
     enabled: b.enabled !== false,
     updatedAt: Date.now(),
