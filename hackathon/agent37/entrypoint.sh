@@ -109,6 +109,7 @@ if [ -n "${PROXY_API_KEY:-}" ]; then
   log "register custom provider river -> $(adm /v1/admin/custom-providers/river "$body")"
   log "org default model $MODEL_ID -> $(adm "/v1/admin/scopes/org:$ORG/runtime" \
     "{\"harnessId\":\"$HARNESS\",\"modelId\":\"$MODEL_ID\",\"effortLevel\":\"auto\",\"fastMode\":false}")"
+  log "web UI model picker $MODEL_ID -> $(adm "/v1/admin/scopes/org:$ORG/webui-models" "{\"ids\":[\"$MODEL_ID\"]}")"
 fi
 
 # ------------------------------------------------------------------- web UI
