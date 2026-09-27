@@ -103,6 +103,7 @@ import {
 import { openSkillById, renderSkills, resetActiveSkill, routeSkillsHistory } from "./skills";
 import { applyTheme, renderSettings, watchSystemTheme } from "./settings";
 import { contextsState, ensureContexts, renderContexts, resetContextsState, resolveProjectScope } from "./contexts";
+import { clientSwitcher } from "./clients";
 import { appState, can, canView, isView, type AuthMode, type Me, type View } from "./shell-state";
 import { trapDialogFocus } from "./dialog-focus";
 import { activeSessionForDocumentTitle, updateDocumentTitle } from "./document-title";
@@ -624,6 +625,7 @@ export function renderSidebarTop(): void {
   const newChatLabel = splitState.active ? "New session" : "Create New Chat";
   render(
     html`
+      ${clientSwitcher()}
       <nav class="nav quick-nav" @click=${onNavClick}>
         ${navRow("chats", ICON.home, "Home")}
         ${can("inbox") ? html`${inboxNavRow()} ${navRow("calendar", ICON.calendar, "Calendar")}` : nothing}

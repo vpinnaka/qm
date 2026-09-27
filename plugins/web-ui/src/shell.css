@@ -12860,3 +12860,62 @@ body.app-edit-embed .custom-chat-shell.app-edit-chat > .chat-bottom-dock {
 .inline-steer .user-row .message-meta {
   justify-content: flex-end;
 }
+
+.client-switcher {
+  padding: 4px 8px 8px;
+}
+.client-switcher .client-select {
+  width: 100%;
+}
+.client-switcher .client-select .menu-button {
+  width: 100%;
+  justify-content: space-between;
+}
+.client-toast {
+  position: fixed;
+  z-index: 200;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+}
+.client-dialog {
+  width: min(620px, 100%);
+}
+.client-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.client-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.client-field.wide {
+  grid-column: 1 / -1;
+}
+.client-field input,
+.client-field select,
+.client-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+}
+.client-field textarea {
+  resize: vertical;
+}
