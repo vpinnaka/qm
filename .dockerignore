@@ -20,3 +20,6 @@ data
 *.env.local
 plugins/**/.env*
 .claude
+**/dist-web
+.generated
+.codex
