@@ -434,22 +434,24 @@ export class OnboardingWelcome extends LitElement {
               ${
                 cohort
                   ? html`<p class="welcome-beat" style="--welcome-delay:2400ms">
-                        And welcome to QM, the agent harness we use to run YC.
+                        And welcome to QM, the bookkeeping workspace that remembers every client.
                       </p>
                       <p class="welcome-beat" style="--welcome-delay:2600ms">
-                        Use it to research customers and investors, fundraise, and automate the everyday work of running
-                        ${this.me?.companyName?.trim() || "your company"}.
+                        Use it to code bills, reconcile bank feeds, and run month-end close across every client of
+                        ${this.me?.companyName?.trim() || "your practice"}.
                         ${this.onMoreIdeas ? html`<button type="button" class="welcome-more-ideas" ?disabled=${this.ideasDisabled} @click=${this.onMoreIdeas}>More ideas</button>` : nothing}
                       </p>
                       <p class="welcome-beat" style="--welcome-delay:2800ms">
-                        Think of it as your YC partner in a box. The more you use QM, the more context we have, the more
-                        we can help.
+                        Each client keeps its own memory: chart of accounts, vendor rules, and close preferences. Switch
+                        clients and QM picks up where you left off, no re-explaining.
                       </p>`
                   : html`<p class="welcome-beat" style="--welcome-delay:400ms">
-                        Welcome to QM, your agent harness. Use it to research customers, build tools, and automate the
-                        everyday work of running ${this.me?.companyName?.trim() || "your company"}.
+                        Welcome to QM, your bookkeeping workspace. Onboard a client once, and QM remembers their chart
+                        of accounts, vendor rules, and close preferences every time you switch back.
                       </p>
-                      <p class="welcome-beat" style="--welcome-delay:700ms">The easiest way to get up and running:</p>`
+                      <p class="welcome-beat" style="--welcome-delay:700ms">
+                        Start by onboarding your first client from the Client menu, or connect your apps:
+                      </p>`
               }`
       }
       ${
