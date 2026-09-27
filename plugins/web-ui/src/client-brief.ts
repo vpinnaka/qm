@@ -6,9 +6,7 @@ export interface ClientProfile {
   basis: string;
   closeCadence: string;
   autoPostThreshold: string;
-  chartNotes: string;
-  vendorRules: string;
-  preferences: string;
+  instructions: string;
 }
 
 export const EMPTY_CLIENT_PROFILE: ClientProfile = {
@@ -19,9 +17,24 @@ export const EMPTY_CLIENT_PROFILE: ClientProfile = {
   basis: "accrual",
   closeCadence: "monthly",
   autoPostThreshold: "0.9",
-  chartNotes: "",
-  vendorRules: "",
-  preferences: "",
+  instructions: "",
+};
+
+export const DEMO_CLIENT_PROFILE: ClientProfile = {
+  name: "Northwind Bakery",
+  entityType: "S-Corp",
+  industry: "food manufacturing",
+  fiscalYearEnd: "December 31",
+  basis: "accrual",
+  closeCadence: "monthly",
+  autoPostThreshold: "0.9",
+  instructions: [
+    "Shell / fuel card -> 6120 Fuel, not 6100 Auto",
+    "6100 Auto is for vehicle purchases and repairs only",
+    "Gusto -> 6000 Payroll",
+    "Sysco and US Foods -> 5000 Cost of goods sold",
+    "Ask before touching a closed period",
+  ].join("\n"),
 };
 
 function lines(value: string): string[] {
@@ -57,12 +70,10 @@ export function clientBrief(profile: ClientProfile): string {
       "- Cite the source document for every entry you propose.",
     ].join("\n"),
   ];
-  if (profile.chartNotes.trim()) sections.push(["## Chart of accounts notes", bullets(profile.chartNotes)].join("\n"));
-  if (profile.vendorRules.trim())
+  if (profile.instructions.trim())
     sections.push(
-      ["## Vendor coding rules", "Apply these before any general heuristic.", bullets(profile.vendorRules)].join("\n"),
+      ["## Client instructions", "Apply these before any general heuristic.", bullets(profile.instructions)].join("\n"),
     );
-  if (profile.preferences.trim()) sections.push(["## Other preferences", bullets(profile.preferences)].join("\n"));
   return `${sections.join("\n\n")}\n`;
 }
 
@@ -73,8 +84,6 @@ export function clientFacts(profile: ClientProfile): string[] {
     `${name} keeps books on the ${profile.basis} basis with a fiscal year ending ${profile.fiscalYearEnd}.`,
     `${name} closes ${profile.closeCadence}.`,
     `Auto-post entries for ${name} only at confidence ${profile.autoPostThreshold} or above.`,
-    ...lines(profile.chartNotes),
-    ...lines(profile.vendorRules),
-    ...lines(profile.preferences),
+    ...lines(profile.instructions),
   ];
 }
