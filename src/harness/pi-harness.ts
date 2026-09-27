@@ -136,7 +136,7 @@ export interface PiHarnessOptions {
   scratchExec?: boolean;
   ownerAuthExec?: boolean;
   reachExec?: boolean;
-  mcpTools?: () => McpToolDescriptor[];
+  mcpTools?: (scope?: ScopeId) => McpToolDescriptor[];
   controlTools?: boolean;
   sandboxResources?: boolean;
   turnWallClockMs?: number;
@@ -1642,7 +1642,7 @@ export function createPiHarness(opts?: PiHarnessOptions): Harness {
           scratchExec,
           ownerAuthExec,
           reachExec,
-          ...(mcpTools ? { mcpTools } : {}),
+          ...(mcpTools ? { mcpTools: () => mcpTools(turnScope) } : {}),
           controlTools,
           ...(commandCredentialHandles?.length ? { commandCredentialHandles } : {}),
           ...(surfaceTools ? { surfaceTools: true } : {}),

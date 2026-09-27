@@ -86,6 +86,16 @@ test("MCP admin validates and preserves credential scope, without returning secr
   assert.equal((await store.get("crm"))?.credentialScope, "shared");
   assert.equal((await store.get("crm"))?.credentialHost, undefined);
   assert.equal((await store.get("crm"))?.credentialAccountType, undefined);
+  assert.equal((await put({ scopes: "group:web-project-acme" })).status, 400);
+  assert.equal((await put({ scopes: ["not-a-scope"] })).status, 400);
+  assert.equal((await put({ scopes: ["group:web-project-acme", "group:web-project-acme"] })).status, 200);
+  assert.deepEqual((await store.get("crm"))?.scopes, ["group:web-project-acme"]);
+  assert.equal((await put({ readOnly: false })).status, 200);
+  assert.deepEqual((await store.get("crm"))?.scopes, ["group:web-project-acme"]);
+  const listed = JSON.parse(await (await fetch(url.replace(/\/crm$/, ""), { headers: ADMIN })).text());
+  assert.deepEqual(listed.servers[0].scopes, ["group:web-project-acme"]);
+  assert.equal((await put({ scopes: [] })).status, 200);
+  assert.equal((await store.get("crm"))?.scopes, undefined);
 });
 
 test("production wiring never uses operator fallback tokens for per-user MCP calls", async (t) => {

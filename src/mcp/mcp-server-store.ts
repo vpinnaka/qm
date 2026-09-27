@@ -6,6 +6,7 @@
 // connector credentials — reachable only through core, never injected into sandboxes.
 
 import type { DurableMap } from "../persistence/durable-map.ts";
+import type { ScopeId } from "../types.ts";
 
 export type McpServerAuthMode = "none" | "bearer" | "client-credentials";
 
@@ -20,6 +21,7 @@ export interface McpServer {
   bearerToken?: string;
   clientId?: string;
   clientSecret?: string;
+  scopes?: ScopeId[];
   readOnly: boolean;
   enabled: boolean;
   updatedAt: number;
@@ -30,6 +32,10 @@ const ID_PATTERN = /^[a-z][a-z0-9-]{1,39}$/;
 
 export function isValidMcpServerId(id: string): boolean {
   return ID_PATTERN.test(id);
+}
+
+export function mcpServerInScope(server: { scopes?: readonly ScopeId[] }, scope?: ScopeId): boolean {
+  return !server.scopes?.length || (!!scope && server.scopes.includes(scope));
 }
 
 export interface McpServerStore {

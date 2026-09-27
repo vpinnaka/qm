@@ -1,6 +1,7 @@
 import { deploymentLiveSmokeRoutes } from "./deployment-live-smoke.ts";
 import { backgroundWorkRoutes } from "./background-work.ts";
 import { composioRoutes } from "./composio.ts";
+import { scopeAppRoutes } from "./scope-apps.ts";
 import { loopIngressRoutes, loopIngressRawRoutes } from "./loop-ingress.ts";
 import { sendJson } from "../http.ts";
 import { type ApiCtx, type BaseCtx, type Route } from "./route.ts";
@@ -95,6 +96,7 @@ export const apiRoutes: ReadonlyArray<Route<ApiCtx>> = [
   ...secretDropRoutes,
   ...connectorRoutes,
   ...composioRoutes,
+  ...scopeAppRoutes,
   ...adminRoutes,
   ...skillPackRoutes,
   ...surfaceRoutes,

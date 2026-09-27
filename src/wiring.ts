@@ -73,6 +73,7 @@ import {
   type PrincipalLinkService,
 } from "./identity/principal-links.ts";
 import type { SlackAccountLink, ComposioReturn } from "./api/routes/composio.ts";
+import type { ScopeApps } from "./api/routes/scope-apps.ts";
 import { installPrincipalLinks } from "./directory/person.ts";
 import type { ExternalMember } from "./identity/external-members.ts";
 import { createResendMailer } from "./admin/invite-email.ts";
@@ -517,6 +518,7 @@ export interface BuiltApp {
   principalLinks: PrincipalLinkService;
   slackAccounts: DurableMap<SlackAccountLink>;
   composioReturns: DurableMap<ComposioReturn>;
+  scopeApps: DurableMap<ScopeApps>;
   keychain?: Keychain;
   serviceCreds: ServiceCredentialStore;
   deliveries: DeliveryStore;
@@ -1247,7 +1249,7 @@ export function buildApp(
     audit: auditLog,
     ...(keychain ? { userTokens: keychain } : {}),
   });
-  const mcpTools = () => mcpToolService.toolDefs();
+  const mcpTools = (scope?: ScopeId) => mcpToolService.toolDefs(scope);
   const browserSessionStore: BrowserSessionStore | undefined = keychainKeyMaterial
     ? createBrowserSessionStore({ sessions: artifactMap<StoredBrowserSession>("browser_sessions"), key: credentialKey })
     : undefined;
@@ -2567,6 +2569,7 @@ export function buildApp(
   const deployIdleTtlMs = deployProvider.profile.managedScaleToZero ? undefined : config.deployIdleTtlMs;
   const BLOB_TTL_MS = 6 * 60 * 60_000;
   const composioReturns = artifactMap<ComposioReturn>("composio_returns");
+  const scopeApps = artifactMap<ScopeApps>("scope_apps");
   const composioReturnSweeper = createSweeper(
     async () => {
       for (const [id, entry] of await composioReturns.entries())
@@ -2788,6 +2791,7 @@ export function buildApp(
     principalLinks,
     slackAccounts: artifactMap<SlackAccountLink>("slack_accounts"),
     composioReturns,
+    scopeApps,
     workspace,
     memory,
     ...(keychain ? { keychain } : {}),
@@ -2928,6 +2932,7 @@ export function serverDeps(
     principalLinks: built.principalLinks,
     slackAccounts: built.slackAccounts,
     composioReturns: built.composioReturns,
+    scopeApps: built.scopeApps,
     ...(built.keychain ? { keychain: built.keychain } : {}),
     serviceCreds: built.serviceCreds,
     deliveries: built.deliveries,

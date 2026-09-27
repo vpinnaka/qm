@@ -8,6 +8,7 @@ import { scopeId } from "../../types.ts";
 import { parseRef } from "../../acl/resource-ref.ts";
 import { orgId } from "../../config.ts";
 import { principalEntitledToScope } from "../../resolution/context-filter.ts";
+import { scopeToolkits } from "./scope-apps.ts";
 import { sendJson } from "../http.ts";
 import { activePrincipal, audit } from "./shared.ts";
 import type { ApiCtx, Route } from "./route.ts";
@@ -45,6 +46,13 @@ async function activeRun(ctx: ApiCtx): Promise<boolean> {
   return true;
 }
 
+function notAttached(ctx: ApiCtx): void {
+  sendJson(ctx.res, 403, {
+    error: "toolkit_not_attached",
+    message: "This app is not attached to this workspace. Attach it in the workspace's app settings first.",
+  });
+}
+
 async function credential(ctx: ApiCtx): Promise<{ key: string; principal: string } | null> {
   if (!(await activeRun(ctx))) return null;
   const principal = ctx.capability?.actorId ?? ctx.actor?.p;
@@ -60,11 +68,13 @@ async function credential(ctx: ApiCtx): Promise<{ key: string; principal: string
   if (ctx.capability) {
     const cap = ctx.capability;
     const shared = cap.scopeId !== personal;
+    const attached = shared ? await scopeToolkits(ctx.deps, cap.scopeId) : null;
     if (
       cap.ownerConnections !== true ||
       cap.deployment ||
       cap.botActor ||
       (shared &&
+        !attached &&
         livePersonCapability(cap) &&
         (await ctx.deps.config?.resolveSharingPostureDurable(personal, cap.scopeId)) !== "open")
     ) {
@@ -142,6 +152,7 @@ async function request(ctx: ApiCtx, key: string, path: string, body?: unknown): 
 async function catalog(ctx: ApiCtx): Promise<void> {
   const access = await credential(ctx);
   if (!access) return;
+  const attached = await scopeToolkits(ctx.deps, ctx.capability?.scopeId);
   const cursor = ctx.url.searchParams.get("cursor") ?? "";
   if (cursor.length > 2048) return sendJson(ctx.res, 400, { error: "bad_cursor" });
   const query = new URLSearchParams({ sort_by: "usage", limit: "1000" });
@@ -154,6 +165,7 @@ async function catalog(ctx: ApiCtx): Promise<void> {
         !item ||
         typeof item.slug !== "string" ||
         !/^[a-z0-9_-]{1,100}$/.test(item.slug) ||
+        (attached && !attached.has(item.slug)) ||
         typeof item.name !== "string" ||
         (Array.isArray(item.auth_schemes) && item.auth_schemes.every((scheme: unknown) => scheme === "NO_AUTH"))
       )
@@ -186,6 +198,8 @@ async function authorize(ctx: ApiCtx, linkSlack = false): Promise<void> {
     return sendJson(ctx.res, 403, { error: "link_unavailable", message: "Sign in as yourself to connect Slack." });
   if (typeof toolkit !== "string" || !/^[a-z0-9_-]{1,100}$/.test(toolkit))
     return sendJson(ctx.res, 400, { error: "invalid_toolkit" });
+  const attached = await scopeToolkits(ctx.deps, ctx.capability?.scopeId);
+  if (attached && !attached.has(toolkit)) return notAttached(ctx);
   const callbackUrl = (ctx.body as { callbackUrl?: unknown }).callbackUrl;
   if (callbackUrl !== undefined) {
     try {
@@ -273,6 +287,7 @@ async function connections(ctx: ApiCtx): Promise<void> {
   if (!access) return;
   const cursor = ctx.url.searchParams.get("cursor") ?? "";
   if (cursor.length > 2048) return sendJson(ctx.res, 400, { error: "bad_cursor" });
+  const attached = await scopeToolkits(ctx.deps, ctx.capability?.scopeId);
   const userIds = composioUserIds(access.principal);
   const query = new URLSearchParams({ user_ids: userIds.join(","), statuses: "ACTIVE", limit: "100" });
   if (cursor) query.set("cursor", cursor);
@@ -291,6 +306,7 @@ async function connections(ctx: ApiCtx): Promise<void> {
         !/^[a-zA-Z0-9_-]{1,100}$/.test(item.toolkit.slug)
       )
         return [];
+      if (attached && !attached.has(item.toolkit.slug)) return [];
       return [{ id: item.id, toolkit: item.toolkit.slug, userId: item.user_id }];
     });
     ctx.res.setHeader("Cache-Control", "no-store");
@@ -314,6 +330,8 @@ async function tools(ctx: ApiCtx): Promise<void> {
   const cursor = ctx.url.searchParams.get("cursor") ?? "";
   if (!/^[a-z0-9_-]{1,100}$/.test(toolkit) || query.length > 1000 || cursor.length > 2048)
     return sendJson(ctx.res, 400, { error: "invalid_query" });
+  const attached = await scopeToolkits(ctx.deps, ctx.capability?.scopeId);
+  if (attached && !attached.has(toolkit)) return notAttached(ctx);
   const params = new URLSearchParams({ toolkit_slug: toolkit, query, limit: "25", toolkit_versions: "latest" });
   if (cursor) params.set("cursor", cursor);
   try {
@@ -375,6 +393,8 @@ async function execute(ctx: ApiCtx): Promise<void> {
       toolkit === "composio"
     )
       return sendJson(ctx.res, 403, { error: "connection_not_authorized" });
+    const attached = await scopeToolkits(ctx.deps, ctx.capability.scopeId);
+    if (attached && !attached.has(toolkit)) return notAttached(ctx);
     const tool = await request(
       ctx,
       access.key,
