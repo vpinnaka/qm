@@ -14,7 +14,7 @@ export function connectorCard(
   const service = connectorService(link);
   if (!composio && connected) {
     return html`<div class="connector-widget connected" role="status">
-      ${connectorLogo(service)}
+      ${connectorLogo(service, undefined, 38)}
       <span class="connector-widget-text"><strong>Connected ${name}</strong><small>Ready to use in chat</small></span>
       <span class="connector-widget-status" aria-hidden="true">${icon(Check, 16)}</span>
     </div>`;
@@ -26,7 +26,7 @@ export function connectorCard(
     rel="noreferrer"
     title="Opens in a new tab"
   >
-    ${connectorLogo(service)}
+    ${connectorLogo(service, undefined, 38)}
     <span class="connector-widget-text"
       ><strong>${(composio && link.label) || `Connect ${name}`}</strong> <small>Authorize access · New tab</small></span
     >

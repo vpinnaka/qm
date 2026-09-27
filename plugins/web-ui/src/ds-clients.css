@@ -1,0 +1,352 @@
+/* Loopfour Studio: clients overrides (DESIGN.md §4). */
+
+/* ---------- App icon tile (§4.13): the provider's own mark on a fixed white plate ---------- */
+.app-icon.connector-logo {
+  --app-icon-size: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--app-icon-size);
+  width: var(--app-icon-size);
+  height: var(--app-icon-size);
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--ds-border);
+  border-radius: calc(var(--app-icon-size) * 0.26);
+  /* The plate is white in both themes so provider marks keep their own contrast. */
+  background: #ffffff;
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+}
+.app-icon.connector-logo img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+/* Logos that are already a full tile fill the plate edge to edge. */
+.app-icon-full.connector-logo img {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Clients list (§4.4 group card as a list card) ---------- */
+.contexts-pane .list-page-head .pane-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ds-text);
+}
+.contexts-pane .list-search {
+  height: 40px;
+  gap: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-full);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text-3);
+}
+.contexts-pane .list-search:focus-within {
+  border-color: var(--ds-border-strong);
+  box-shadow: var(--ds-focus-ring);
+}
+.contexts-pane .list-search input {
+  font-size: 14px;
+  color: var(--ds-text);
+}
+.contexts-pane .list-toolbar {
+  margin: 14px auto 12px;
+}
+.contexts-pane .list-select > span:not(.field-select) {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-3);
+}
+.contexts-pane .project-list {
+  overflow: hidden;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+}
+.contexts-pane .project-list .project-group {
+  margin-top: 0;
+}
+.contexts-pane .project-list .project-group + .project-group {
+  border-top: 1px solid var(--ds-border);
+}
+.contexts-pane .project-list .context-row {
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--ds-border);
+  transition: background 0.14s ease;
+}
+.contexts-pane .project-list .project-group:last-child .context-row:last-child {
+  border-bottom: 0;
+}
+.contexts-pane .project-list .context-row:hover {
+  background: var(--ds-surface-2);
+}
+.contexts-pane .project-list .context-row-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text);
+}
+.contexts-pane .project-list .context-row-meta {
+  font-size: 12.5px;
+  color: var(--ds-text-3);
+}
+.contexts-pane .project-list .context-glyph {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-sm);
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+}
+
+/* ---------- Empty state (§4.12) ---------- */
+.contexts-pane .project-empty {
+  padding: 44px 24px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text-2);
+  font-size: 14.5px;
+  text-align: center;
+}
+
+/* ---------- Client detail hero (§5 detail page) ---------- */
+.contexts-pane .context-back {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ds-text-3);
+}
+.contexts-pane .context-back:hover {
+  color: var(--ds-text);
+}
+.contexts-pane .context-detail-head {
+  align-items: center;
+  gap: 18px;
+}
+.contexts-pane .context-detail-head .context-glyph.large {
+  width: 62px;
+  height: 62px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+}
+.contexts-pane .context-detail-head .context-glyph.large svg {
+  width: 28px;
+  height: 28px;
+}
+.contexts-pane .context-detail-head .pane-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ds-text);
+}
+.contexts-pane .context-sub {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ds-text-2);
+}
+
+/* ---------- Panels as SettingGroup cards (§4.4) ---------- */
+.contexts-pane .context-panel {
+  padding: 18px 20px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+}
+.contexts-pane .context-panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ds-text);
+}
+.contexts-pane .context-panel-copy {
+  max-width: 56ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ds-text-2);
+}
+.contexts-pane .context-panel-count {
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.contexts-pane .context-inline-empty,
+.contexts-pane .context-panel-loading {
+  padding: 14px 0 2px;
+  font-size: 13.5px;
+  color: var(--ds-text-3);
+}
+
+/* Conversations: hairline rows inside the card instead of bordered mini-cards. */
+.contexts-pane .context-session-list {
+  gap: 0;
+}
+.contexts-pane .context-session-list .context-session-row {
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-sm);
+  background: transparent;
+}
+.contexts-pane .context-session-list .context-session-row:last-child {
+  border-bottom: 0;
+}
+.contexts-pane .context-session-list .context-session-row:hover {
+  background: var(--ds-surface-2);
+}
+.contexts-pane .context-session-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text);
+}
+.contexts-pane .context-session-meta {
+  font-size: 12.5px;
+  color: var(--ds-text-3);
+}
+
+/* ---------- Apps panel: the Integrations page pattern ---------- */
+.client-apps-connected {
+  margin-top: 4px;
+}
+.client-apps-strip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ds-border);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ds-text);
+}
+.client-apps-count {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ds-text-3);
+}
+.client-apps-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 0 2px;
+}
+.contexts-pane .client-app-list {
+  margin-top: 12px;
+}
+.contexts-pane .client-app-row {
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  font-size: 14px;
+  transition: background 0.14s ease;
+}
+.contexts-pane .client-app-row:last-child {
+  border-bottom: 0;
+}
+.contexts-pane .client-app-row:hover {
+  background: var(--ds-surface-2);
+}
+.client-app-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.contexts-pane .client-app-name {
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text);
+}
+.client-app-desc {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--ds-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.client-app-state {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ds-text-3);
+}
+.contexts-pane .client-app-url {
+  font-family: var(--ds-font-mono);
+  font-size: 12.5px;
+  color: var(--ds-text-3);
+}
+
+/* ---------- Brief panel ---------- */
+.contexts-pane .client-brief-text {
+  padding: 14px 16px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.contexts-pane .client-brief-input,
+.contexts-pane .client-field input,
+.contexts-pane .client-field textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.contexts-pane .client-panel-status {
+  font-size: 12.5px;
+  color: var(--ds-text-3);
+}
+
+/* ---------- Onboard-client dialog body ---------- */
+.client-dialog {
+  width: min(660px, 100%);
+}
+.client-dialog .client-fields {
+  gap: 14px;
+  margin-top: 18px;
+}
+.client-dialog .client-field {
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ds-text-2);
+}
+.client-dialog .client-field input,
+.client-dialog .client-field textarea,
+.client-dialog .client-field select {
+  padding: 9px 12px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.client-dialog .client-field input:focus-visible,
+.client-dialog .client-field textarea:focus-visible {
+  border-color: var(--ds-border-strong);
+  box-shadow: var(--ds-focus-ring);
+  outline: none;
+}

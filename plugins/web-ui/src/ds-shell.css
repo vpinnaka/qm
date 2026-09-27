@@ -1,0 +1,543 @@
+/* Loopfour Studio: shell overrides (DESIGN.md §3, §4.1-4.7, §5, §9). */
+
+body {
+  font-family: var(--ds-font-sans);
+}
+
+/* ===== §5 shell ===== */
+.layout,
+.main {
+  background: var(--ds-bg);
+}
+
+/* ===== §4.6 sidebar: page ground, one hairline right edge ===== */
+.sidebar {
+  width: var(--sidebar-w);
+  padding: 12px 8px 12px 10px;
+  background: var(--ds-bg);
+  border-right: 1px solid var(--ds-border);
+}
+.sidebar .list {
+  gap: 2px;
+}
+
+/* Header: 22px brand tile + workspace name 13.5/600 */
+.brand {
+  padding: 2px 4px 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.brand-name {
+  font-family: var(--ds-font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ds-text);
+}
+.brand-mark,
+.signin-brand .brand-mark {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 28%;
+  background:
+    url("./assets/loopfour-mark-black.png") center / 64% 64% no-repeat,
+    var(--ds-brand);
+  box-shadow: none;
+}
+/* shell.css paints a ::before tile over the mark for its text fallback. */
+.brand-mark::before {
+  content: none;
+  display: none;
+}
+
+/* ===== §4.5 nav rows and section labels ===== */
+.navrow {
+  gap: 10px;
+  min-height: 0;
+  padding: 7px 10px;
+  border-radius: var(--ds-r-sm);
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ds-text-2);
+  transition:
+    background 0.13s ease,
+    color 0.13s ease;
+}
+.navrow:hover,
+.navrow.active {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+.navrow.active {
+  font-weight: 500;
+}
+.navrow svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+.nav-badge {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.section-label {
+  padding: 14px 10px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ds-text-3);
+}
+.quick-nav {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+/* Session / recent rows read as nav rows. */
+.session-row,
+.recent-project-head,
+.archived-toggle {
+  border-radius: var(--ds-r-sm);
+}
+.session-row .session-open,
+.archived-toggle {
+  font-size: 13.5px;
+  color: var(--ds-text-2);
+}
+.session-row.active .session-open,
+.session-row:hover .session-open {
+  color: var(--ds-text);
+}
+
+/* ===== §4.6 footer ===== */
+.sidebar-footer {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ds-border);
+}
+.user-pill {
+  padding: 7px 10px;
+  border-radius: var(--ds-r-sm);
+}
+.user-pill:hover,
+.user-menu.menu-open .user-pill {
+  background: var(--ds-surface-2);
+}
+.user-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-2);
+}
+
+/* ===== Client switcher: a 32px / 12px control on the page ground ===== */
+.client-switcher {
+  padding: 4px 4px 10px;
+}
+.client-switcher .client-select .menu-button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+.client-switcher .client-select .menu-button:hover,
+.client-switcher .client-select .menu-button[aria-expanded="true"] {
+  background: var(--ds-surface-2);
+}
+
+/* ===== §4.1 buttons ===== */
+.btn {
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-full);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background 0.13s ease,
+    border-color 0.13s ease,
+    color 0.13s ease,
+    opacity 0.13s ease;
+}
+.btn:hover {
+  background: var(--ds-surface-2);
+}
+.btn.compact {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.btn.primary {
+  background: var(--ds-text);
+  border-color: var(--ds-text);
+  color: var(--ds-bg);
+  box-shadow: none;
+}
+.btn.primary:hover {
+  background: var(--ds-text);
+  border-color: var(--ds-text);
+  opacity: 0.88;
+}
+.btn.ghost,
+.btn.subtle {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ds-text-2);
+}
+.btn.ghost:hover,
+.btn.subtle:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+.btn.danger {
+  background: var(--ds-danger-soft);
+  border-color: transparent;
+  color: var(--ds-danger);
+  box-shadow: none;
+}
+.btn.danger:hover {
+  background: var(--ds-danger-soft);
+  border-color: transparent;
+  color: var(--ds-danger);
+  opacity: 0.82;
+}
+.btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ===== §4.1 icon-only buttons: 30px circles ===== */
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--ds-r-full);
+  color: var(--ds-text-2);
+  transition:
+    background 0.13s ease,
+    color 0.13s ease;
+}
+.icon-btn:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+.icon-btn.subtle {
+  color: var(--ds-text-3);
+}
+.icon-btn.compact {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+}
+
+/* ===== §4.3 inputs, selects, textareas ===== */
+.field-select > select,
+.field-menu .menu-button,
+.list-search,
+.settings-choice {
+  border-radius: var(--ds-r-md);
+}
+.field-select > select,
+.field-menu .menu-button {
+  min-height: 32px;
+  height: auto;
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+  font-size: 13px;
+}
+.field-select > select:hover:not(:disabled),
+.field-menu .menu-button:hover:not(:disabled),
+.field-menu .menu-button[aria-expanded="true"] {
+  background: var(--ds-surface-2);
+  border-color: var(--ds-border);
+}
+.field-select.compact > select {
+  min-height: 30px;
+  font-size: 12.5px;
+}
+.list-search {
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+}
+.list-search input,
+.chat-search-input,
+.session-rename-input {
+  color: var(--ds-text);
+}
+.list-search input::placeholder,
+.chat-search-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--ds-text-2);
+}
+.signin input,
+.project-name-field input,
+.deploy-edit-input,
+.resource-form input,
+.resource-form textarea,
+.cron-edit-dialog input,
+.cron-edit-dialog textarea,
+.skill-desc-input,
+.skill-body-input {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+}
+
+/* §10 focus divergence: a 3px accent ring at 50%, never a 14%-alpha border alone. */
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.navrow:focus-visible,
+.user-pill:focus-visible,
+.menu-button:focus-visible,
+.field-menu .menu-button:focus-visible,
+.field-select > select:focus-visible,
+.session-menu-option:focus-visible,
+.browse-tile:focus-visible,
+.settings-choice-option:focus-visible,
+.top-banner-action:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--ds-border-strong);
+  box-shadow: var(--ds-focus-ring);
+}
+.list-search:focus-within {
+  border-color: var(--ds-border-strong);
+  box-shadow: var(--ds-focus-ring);
+}
+
+/* ===== §4.13 menus, popovers, dialogs: surface at 16px on shadow-2 ===== */
+.menu-popover,
+.session-menu-popover,
+.user-menu-popover,
+.chat-search-palette,
+.browse-palette,
+dialog,
+.card {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+}
+.menu-popover,
+.session-menu-popover,
+.user-menu-popover,
+.chat-search-palette,
+.browse-palette,
+dialog {
+  box-shadow: var(--ds-shadow-2);
+}
+.card {
+  box-shadow: var(--ds-shadow-1);
+}
+.session-menu-option,
+.menu-select-option,
+.chat-search-row {
+  border-radius: var(--ds-r-sm);
+  font-size: 13px;
+}
+.session-menu-option:hover,
+.chat-search-row.selected {
+  background: var(--ds-surface-2);
+}
+.chat-search-snippet mark {
+  background: var(--ds-accent-soft);
+  color: inherit;
+}
+.chat-search-who.user {
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+}
+.chat-search-inputrow,
+.chat-search-foot,
+.chat-search-askbar {
+  border-color: var(--ds-border);
+  color: var(--ds-text-3);
+}
+
+/* ===== §4.2 toggle: 38x22, accent when on ===== */
+.loop-autopilot-switch {
+  background: var(--ds-surface-3);
+  transition: background 0.15s ease;
+}
+.loop-autopilot-switch span {
+  background: #ffffff;
+  box-shadow: var(--ds-shadow-1);
+  transition: transform 0.15s ease;
+}
+.loop-autopilot.on .loop-autopilot-switch {
+  background: var(--ds-accent);
+}
+
+/* ===== §4.7 StatusChip ===== */
+.badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+}
+.badge.ok {
+  background: var(--ds-success-soft);
+  color: var(--ds-success);
+}
+.badge.warn {
+  background: var(--ds-warn-soft);
+  color: var(--ds-warn);
+}
+.bg-chip,
+.chip-open {
+  border-radius: var(--ds-r-full);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.bg-chip[role="button"]:hover {
+  background: var(--ds-surface-2);
+}
+
+/* ===== §5 top bars and pane headers ===== */
+.pane {
+  padding: 26px 40px 40px;
+}
+.pane-title {
+  font-size: 24px;
+  font-weight: 600;
+}
+.pane-head {
+  margin-bottom: 10px;
+}
+
+/* ===== §4.4 SettingGroup / SettingRow ===== */
+.settings-group {
+  gap: 0;
+  margin-top: 16px;
+  padding: 0 16px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+}
+.settings-row {
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ds-border);
+}
+.settings-row-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text);
+}
+.settings-row-note {
+  margin-top: 3px;
+  max-width: 56ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ds-text-2);
+}
+.settings-choice {
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-2);
+}
+.settings-choice-option {
+  border-radius: var(--ds-r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-2);
+}
+.settings-choice-option.selected {
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+}
+.settings-theme-link {
+  color: var(--ds-text-2);
+}
+.settings-row-error {
+  color: var(--ds-danger);
+}
+
+/* ===== Browse page ===== */
+.browse-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-text);
+}
+.browse-tile {
+  gap: 11px;
+  padding: 12px 14px;
+  border-radius: var(--ds-r-md);
+  transition: background 0.13s ease;
+}
+.browse-tile:hover,
+.browse-tile.selected {
+  background: var(--ds-surface-2);
+}
+.browse-tile-icon {
+  color: var(--ds-text-3);
+}
+.browse-tile-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text);
+}
+.browse-tile-blurb {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ds-text-2);
+}
+
+/* ===== Dev-mode banner: quiet, not a coloured bar ===== */
+.top-banner.dev {
+  gap: 12px;
+  background: var(--ds-warn-soft);
+  border-bottom: 1px solid var(--ds-border);
+  color: var(--ds-warn);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.top-banner.dev b {
+  font-weight: 600;
+}
+.top-banner.dev .top-banner-action {
+  padding: 4px 11px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-full);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  color: var(--ds-text);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.top-banner.dev .top-banner-action:hover {
+  background: var(--ds-surface-2);
+}
+.impersonation-banner {
+  font-size: 12.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navrow,
+  .btn,
+  .icon-btn,
+  .browse-tile,
+  .loop-autopilot-switch,
+  .loop-autopilot-switch span,
+  .settings-choice-option {
+    transition: none;
+  }
+}

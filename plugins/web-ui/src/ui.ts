@@ -4,8 +4,8 @@ import { live } from "lit/directives/live.js";
 import { Check, ChevronDown, Download, createElement, type IconNode } from "lucide";
 
 export function brandName(): string {
-  if (typeof document === "undefined") return "QM";
-  return document.querySelector<HTMLMetaElement>('meta[name="brand-self-label"]')?.content || "QM";
+  if (typeof document === "undefined") return "Loopfour";
+  return document.querySelector<HTMLMetaElement>('meta[name="brand-self-label"]')?.content || "Loopfour";
 }
 
 export function brandMark(): TemplateResult {

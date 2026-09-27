@@ -2,8 +2,8 @@ import { html, nothing, type TemplateResult } from "lit";
 import { Plus, Trash2 } from "lucide";
 import { api } from "./core-bridge";
 import { errMessage } from "../../chassis/src/errors";
-import { connectorLogo } from "./connector-logo";
-import { fieldSelect, icon } from "./ui";
+import { connectorLogo, connectorName } from "./connector-logo";
+import { icon } from "./ui";
 import { WEB_PROJECT_SCOPE_PREFIX } from "./deep-link";
 import { accountantMode } from "./shell-state";
 import { tip } from "./tooltip";
@@ -27,7 +27,6 @@ const clientPanelsState = {
   connectedToolkits: [] as string[],
   appsBusy: false,
   appsNotice: "",
-  attachPick: "",
   servers: [] as McpServerView[],
   mcpBusy: false,
   mcpNotice: "",
@@ -56,7 +55,6 @@ export function resetClientPanels(): void {
   clientPanelsState.connectedToolkits = [];
   clientPanelsState.appsBusy = false;
   clientPanelsState.appsNotice = "";
-  clientPanelsState.attachPick = "";
   clientPanelsState.servers = [];
   clientPanelsState.mcpBusy = false;
   clientPanelsState.mcpNotice = "";
@@ -154,7 +152,6 @@ async function putToolkits(toolkits: string[]): Promise<void> {
       body: JSON.stringify({ scopeId: scope, toolkits }),
     });
     clientPanelsState.toolkits = r.toolkits ?? toolkits;
-    clientPanelsState.attachPick = "";
   } catch (e) {
     clientPanelsState.appsNotice = errMessage(e, "Couldn't update this client's apps.");
   } finally {
@@ -306,53 +303,52 @@ function appsPanel(): TemplateResult {
       </div>
       ${
         attached.length
-          ? html`<div class="client-app-list">
-              ${attached.map(
-                (toolkit) =>
-                  html`<div class="client-app-row">
-                    ${connectorLogo(toolkit)}<span class="client-app-name">${toolkit}</span>
-                    <button
-                      class="project-icon-button danger"
-                      type="button"
-                      aria-label=${`Remove ${toolkit} from this client`}
-                      ${tip("Remove")}
-                      ?disabled=${clientPanelsState.appsBusy}
-                      @click=${() => void putToolkits(attached.filter((t) => t !== toolkit))}
-                    >
-                      ${icon(Trash2, 14)}
-                    </button>
-                  </div>`,
-              )}
+          ? html`<div class="client-apps-connected">
+              <div class="client-apps-strip-head">
+                <span>Connected</span
+                ><span class="client-apps-count">${attached.length} ${attached.length === 1 ? "app" : "apps"}</span>
+              </div>
+              <div class="client-apps-strip">${attached.map((toolkit) => connectorLogo(toolkit, undefined, 48))}</div>
             </div>`
           : html`<div class="context-inline-empty">No apps yet for this client.</div>`
       }
       ${
-        available.length
-          ? html`<div class="client-panel-actions">
-              ${fieldSelect({
-                compact: true,
-                ariaLabel: "App to add",
-                disabled: clientPanelsState.appsBusy,
-                value: clientPanelsState.attachPick,
-                onChange: (value) => {
-                  clientPanelsState.attachPick = value;
-                },
-                options: [
-                  html`<option value="">Choose an app…</option>`,
-                  ...available.map((t) => html`<option value=${t}>${t}</option>`),
-                ],
+        attached.length || available.length
+          ? html`<div class="client-app-list">
+              ${[...attached, ...available].map((toolkit) => {
+                const on = attached.includes(toolkit);
+                return html`<div class="client-app-row">
+                  ${connectorLogo(toolkit, undefined, 40)}
+                  <span class="client-app-copy"
+                    ><span class="client-app-name">${connectorName(toolkit)}</span
+                    ><span class="client-app-desc"
+                      >${on ? "Available to the bookkeeper here" : "Connected in your workspace"}</span
+                    ></span
+                  >
+                  ${
+                    on
+                      ? html`<span class="client-app-state">Attached</span>
+                          <button
+                            class="project-icon-button danger"
+                            type="button"
+                            aria-label=${`Remove ${connectorName(toolkit)} from this client`}
+                            ${tip("Remove")}
+                            ?disabled=${clientPanelsState.appsBusy}
+                            @click=${() => void putToolkits(attached.filter((t) => t !== toolkit))}
+                          >
+                            ${icon(Trash2, 14)}
+                          </button>`
+                      : html`<button
+                          class="btn"
+                          type="button"
+                          ?disabled=${clientPanelsState.appsBusy}
+                          @click=${() => void putToolkits([...attached, toolkit])}
+                        >
+                          ${icon(Plus, 15)}<span>Attach</span>
+                        </button>`
+                  }
+                </div>`;
               })}
-              <button
-                class="btn"
-                type="button"
-                ?disabled=${clientPanelsState.appsBusy}
-                @click=${() => {
-                  const pick = clientPanelsState.attachPick;
-                  if (pick) void putToolkits([...attached, pick]);
-                }}
-              >
-                ${icon(Plus, 15)}<span>Add app</span>
-              </button>
             </div>`
           : html`<p class="context-panel-copy">Connect an app under Settings first, then add it to this client.</p>`
       }

@@ -1,4 +1,5 @@
 import "./shell.css";
+import "./ds.css";
 import "@mariozechner/mini-lit/dist/ThemeToggle.js";
 import { html, render } from "lit";
 import { Lock, ArrowUpRight, Check, ChevronDown, Copy, File } from "lucide";

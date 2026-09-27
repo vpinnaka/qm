@@ -98,7 +98,7 @@ const brandingCache = createBrandingCache(async () => {
 
 async function serveWebManifest(res: ServerResponse): Promise<void> {
   const branding = await brandingCache.forRender();
-  const name = branding.selfLabel || "QM";
+  const name = branding.selfLabel || "Loopfour";
   const manifest = {
     name,
     short_name: name,
@@ -110,9 +110,9 @@ async function serveWebManifest(res: ServerResponse): Promise<void> {
     theme_color: "#ffffff",
     icons: [
       {
-        src: process.env.WEB_UI_FAVICON_SVG ? "/favicon.svg" : "/brand-mark.svg",
+        src: process.env.WEB_UI_FAVICON_SVG ? "/favicon.svg" : "/loopfour-app-icon.png",
         sizes: "any",
-        type: "image/svg+xml",
+        type: process.env.WEB_UI_FAVICON_SVG ? "image/svg+xml" : "image/png",
         purpose: "any maskable",
       },
     ],

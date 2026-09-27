@@ -1,0 +1,486 @@
+/* Loopfour Studio: chat overrides (DESIGN.md §3, §4.8–§4.13, §5).
+   Loaded after shell.css, so equal-specificity selectors here win by order. */
+
+/* ---------------------------------------------------------------- chat column */
+
+.custom-chat-shell {
+  /* Chat reads at 14.5/1.65 in a 660px column with 20px between turns (§1, §5).
+     --meta-lane is the per-row bottom lane shell.css uses as the inter-turn rhythm. */
+  --content-w: 660px;
+  --chat-font-size: 14.5px;
+  --meta-lane: 20px;
+}
+
+.chat-scroll {
+  --chat-scroll-pad-top: 20px;
+  --chat-edge-space: 28px;
+  --chat-pad: 36px;
+  background: var(--ds-bg);
+}
+
+/* ------------------------------------------------------------- session header */
+
+.chat-topbar {
+  height: 52px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--ds-border);
+  background: var(--ds-bg);
+}
+
+.chat-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ds-text);
+}
+
+.chat-subtitle {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--ds-text-3);
+}
+
+.chat-topbar .icon-btn {
+  color: var(--ds-text-2);
+  background: transparent;
+  border-color: transparent;
+  transition:
+    background 130ms ease,
+    color 130ms ease;
+}
+
+.chat-topbar .icon-btn:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+/* ------------------------------------------------------------------- messages */
+
+/* User: right-aligned bubble, max 72%, surface-2, 16px radius, 12px 16px, 14.5/1.55 (§4.8). */
+.message-bubble {
+  max-width: min(72%, 480px);
+  padding: 12px 16px;
+  border-radius: var(--ds-r-lg);
+  font-size: var(--chat-font-size);
+  line-height: 1.55;
+}
+
+.user-bubble {
+  --bubble-bg: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.message-stack .user-row.stuck > .user-bubble {
+  box-shadow: var(--ds-shadow-1);
+}
+
+/* Assistant: no bubble, 14.5/1.65, max 70ch. */
+.assistant-body {
+  max-width: 70ch;
+  color: var(--ds-text);
+  font-size: var(--chat-font-size);
+  line-height: 1.65;
+}
+
+.assistant-body :is(markdown-block, qm-markdown) p {
+  margin-block: 0 12px;
+}
+
+.assistant-body :is(markdown-block, qm-markdown) :is(h1, h2, h3, h4, h5, h6) {
+  margin-block: 1.4em 0.5em;
+  font-weight: 600;
+}
+
+.assistant-body :is(markdown-block, qm-markdown) :is(ul, ol) {
+  margin-block: 0 12px;
+}
+
+:is(.assistant-body, .user-bubble) :is(markdown-block, qm-markdown) a {
+  color: var(--ds-accent);
+  transition: color 130ms ease;
+}
+
+:is(.assistant-body, .user-bubble) :is(markdown-block, qm-markdown) a:is(:hover, :focus-visible) {
+  color: var(--ds-accent-strong);
+}
+
+.speaker-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ds-text-3);
+}
+
+.message-meta,
+.message-time {
+  color: var(--ds-text-3);
+}
+
+/* -------------------------------------------- tool calls / worked-for / thinking */
+
+/* Quiet secondary rows: 13.5 --ds-text-2 with hairline rules (§3, §4.8). */
+.work-head,
+.tool-row,
+.tool-row .tool-summary,
+.thinking-summary,
+.live-work-label,
+.work-message {
+  font-size: 13.5px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--ds-text-2);
+}
+
+.work-head {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.work[open] > .work-head,
+.work-fold[open] > .work-head {
+  border-bottom-color: var(--ds-border);
+}
+
+.work-divider {
+  background: var(--ds-border);
+}
+
+.tool-detail,
+.thinking-title {
+  color: var(--ds-text-3);
+}
+
+.thinking,
+.thinking-body {
+  border-left: 1px solid var(--ds-border);
+  padding-left: 12px;
+  color: var(--ds-text-2);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.activity-chevron,
+.tool-summary > .activity-chevron {
+  transition: transform 130ms ease;
+}
+
+.work-head:hover,
+.tool-row .tool-summary:hover,
+.thinking-summary:hover {
+  color: var(--ds-text);
+}
+
+.tool-payload-card {
+  background: var(--ds-surface-2);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+}
+
+.tool-payload-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-text-2);
+}
+
+/* ---------------------------------------------------------------- code blocks */
+
+/* Inline code: 12.5 mono on surface-2 with a hairline, radius 4, 1px 5px (§4.8). */
+:is(.assistant-body, .user-bubble) :is(markdown-block, qm-markdown).markdown-content :not(pre) > code {
+  padding: 1px 5px;
+  border: 1px solid var(--ds-border);
+  border-radius: 4px;
+  background: var(--ds-surface-2);
+  font-family: var(--ds-font-mono);
+  font-size: 12.5px;
+}
+
+/* Block: surface card, hairline, 12px radius, shadow-1, language header (§4.9). */
+:is(.assistant-body, .user-bubble) code-block:not([language="text"]) {
+  display: block;
+  margin: 14px 0;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  overflow: hidden;
+}
+
+:is(.assistant-body, .user-bubble) code-block:not([language="text"])::before {
+  content: attr(language);
+  display: block;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ds-border);
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ds-text-2);
+}
+
+:is(.assistant-body, .user-bubble) :is(markdown-block, qm-markdown) pre {
+  margin: 0;
+  padding: 14px;
+  border-radius: 0;
+  background: transparent;
+}
+
+:is(.assistant-body, .user-bubble) :is(markdown-block, qm-markdown) pre code {
+  font-family: var(--ds-font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ds-text);
+}
+
+/* QM's own code card (tool output) gets the same recipe. */
+.code-card {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-1);
+  font-family: var(--ds-font-mono);
+}
+
+.code-card-head {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.code-card-lang {
+  font-family: var(--ds-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-text-2);
+}
+
+.code-card-body {
+  padding: 14px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ds-text);
+}
+
+.code-card-foot {
+  font-size: 12.5px;
+  color: var(--ds-text-3);
+}
+
+/* Syntax: the kit specifies only key / string / number, so map highlight.js onto those. */
+:root,
+.dark {
+  --syntax-keyword: var(--ds-code-key);
+  --syntax-entity: var(--ds-code-key);
+  --syntax-tag: var(--ds-code-key);
+  --syntax-string: var(--ds-code-string);
+  --syntax-addition-fg: var(--ds-code-string);
+  --syntax-constant: var(--ds-code-number);
+  --syntax-variable: var(--ds-code-number);
+  --syntax-list: var(--ds-code-number);
+  --syntax-heading: var(--ds-code-key);
+  --syntax-comment: var(--ds-text-3);
+}
+
+/* ------------------------------------------------------------------- composer */
+
+/* Surface card, hairline, 16px radius, shadow-2; text 14/1.5 at 14px 16px 4px;
+   bar 8px 10px 10px with 10px gaps (§4.10). */
+.composer-wrap {
+  --composer-font-size: 14px;
+  --composer-pad-block: 0px;
+  --composer-pad-inline: 0px;
+  --composer-pad-end: 0px;
+  padding: 0;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-lg);
+  background: var(--ds-surface);
+  box-shadow: var(--ds-shadow-2);
+  transition: border-color 130ms ease;
+}
+
+.composer-wrap:focus-within {
+  border-color: var(--ds-border-strong);
+}
+
+.composer-input {
+  padding: 14px 16px 4px;
+  min-height: 44px;
+  font-size: var(--composer-font-size);
+  line-height: 1.5;
+  color: var(--ds-text);
+}
+
+/* The card carries the focus affordance; the textarea inside it never paints a ring. */
+.composer-input:is(:focus, :focus-visible) {
+  outline: 0;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.composer-input::placeholder {
+  color: var(--ds-text-3);
+}
+
+.composer-toolbar {
+  padding: 8px 10px 10px;
+  gap: 10px;
+}
+
+.composer-left,
+.composer-right {
+  gap: 10px;
+}
+
+/* Model picker / loadout reads as a quiet chip. */
+.composer-toolbar .menu-button,
+.composer-toolbar .menu-button.loadout-button {
+  padding: 6px 11px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+  transition:
+    background 130ms ease,
+    color 130ms ease;
+}
+
+.composer-toolbar .menu-button:hover,
+.composer-toolbar .menu-button.loadout-button:hover {
+  background: var(--ds-surface-3);
+  color: var(--ds-text);
+}
+
+.composer-toolbar .icon-btn {
+  color: var(--ds-text-2);
+  background: transparent;
+  border-color: transparent;
+}
+
+.composer-toolbar .icon-btn:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+/* 32px round primary send; surface-3 until there is something to send. */
+.send-btn,
+.stop-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: 0;
+  border-radius: var(--ds-r-full);
+  background: var(--ds-text);
+  color: var(--ds-bg);
+  transition:
+    background 130ms ease,
+    color 130ms ease;
+}
+
+.send-btn:hover:not(:disabled),
+.stop-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ds-text) 88%, var(--ds-bg));
+  color: var(--ds-bg);
+}
+
+.send-btn:disabled,
+.stop-btn:disabled {
+  opacity: 1;
+  background: var(--ds-surface-3);
+  color: var(--ds-text-2);
+}
+
+.composer-note {
+  font-size: 12.5px;
+  color: var(--ds-text-3);
+}
+
+.composer-error {
+  font-size: 12.5px;
+  color: var(--ds-danger);
+}
+
+.queued-chip {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-r-md);
+  background: var(--ds-surface-2);
+  color: var(--ds-text-2);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------- home / empty chat state */
+
+/* Centered column: title 26/400, subtitle 14 --ds-text-2, suggestion rows (§4.12, §6 Home). */
+.chat-cta {
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--ds-text);
+}
+
+.welcome-greeting h1 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ds-text);
+}
+
+.welcome-greeting p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ds-text-2);
+}
+
+.suggested-activity {
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: var(--ds-r-md);
+  color: var(--ds-text-2);
+  transition:
+    background 130ms ease,
+    color 130ms ease;
+}
+
+.suggested-activity:hover {
+  background: var(--ds-surface-2);
+  color: var(--ds-text);
+}
+
+.suggested-activity-title {
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: inherit;
+}
+
+/* shell.css tints these blue-grey in dark mode; the kit keeps them neutral. */
+.dark .suggested-activity-title {
+  color: inherit;
+}
+
+.suggested-activity-icon {
+  color: var(--ds-accent);
+}
+
+.suggested-activity:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: -2px;
+}
+
+/* --------------------------------------------------------------------- motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-topbar .icon-btn,
+  .composer-wrap,
+  .composer-toolbar .menu-button,
+  .composer-toolbar .icon-btn,
+  .send-btn,
+  .stop-btn,
+  .suggested-activity,
+  .activity-chevron,
+  :is(.assistant-body, .user-bubble) :is(markdown-block, qm-markdown) a {
+    transition: none;
+  }
+}

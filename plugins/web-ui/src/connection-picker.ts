@@ -62,7 +62,7 @@ export function mountConnectionPicker(
                 aria-label=${service.connected ? `${service.name} connected` : `Connect ${service.name}`}
                 @click=${() => onSelect(service)}
               >
-                ${connectorLogo(service.id, service.logoUrl)}
+                ${connectorLogo(service.id, service.logoUrl, 24)}
                 <span class="connection-picker-name">${service.name}</span>
                 <span class="connection-picker-trailing">${icon(service.connected ? Check : ArrowUpRight, 14)}</span>
               </button>`,

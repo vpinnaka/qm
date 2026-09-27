@@ -419,7 +419,7 @@ function drawConnectors(): void {
     return html`
       <article class="kc-resource kc-account">
         <div class="kc-resource-main">
-          ${connectorLogo(id)}
+          ${connectorLogo(id, undefined, 30)}
           <div class="kc-resource-copy">
             <div class="kc-resource-title-row">
               <h3>${meta.name}</h3>
