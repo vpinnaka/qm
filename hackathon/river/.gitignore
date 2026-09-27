@@ -1,0 +1,5 @@
+data/tx.csv
+.env.proxy
+*.log
+.venv/
+__pycache__/
