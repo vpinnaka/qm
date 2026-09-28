@@ -1779,7 +1779,7 @@ const apiRoutes: readonly WebRoute[] = [
   {
     method: "GET",
     path: "/api/mcp-servers",
-    handle: async (c) => relayCap(c.res, "GET", "/v1/admin/mcp-servers"),
+    handle: async (c) => relayCore(c.res, "GET", "/v1/admin/mcp-servers"),
   },
   {
     method: "PUT",
@@ -1788,13 +1788,13 @@ const apiRoutes: readonly WebRoute[] = [
       const { req, res } = c;
       const body = await readJson<Record<string, unknown>>(req, res, false);
       if (!body) return;
-      return relayCap(res, "PUT", `/v1/admin/mcp-servers/${encodeURIComponent(c.params.id!)}`, JSON.stringify(body));
+      return relayCore(res, "PUT", `/v1/admin/mcp-servers/${encodeURIComponent(c.params.id!)}`, JSON.stringify(body));
     },
   },
   {
     method: "DELETE",
     path: "/api/mcp-servers/:id",
-    handle: async (c) => relayCap(c.res, "DELETE", `/v1/admin/mcp-servers/${encodeURIComponent(c.params.id!)}`),
+    handle: async (c) => relayCore(c.res, "DELETE", `/v1/admin/mcp-servers/${encodeURIComponent(c.params.id!)}`),
   },
   {
     method: "GET",

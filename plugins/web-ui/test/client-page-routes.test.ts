@@ -10,6 +10,7 @@ interface Call {
   url: string;
   body: Record<string, unknown>;
   capability: string;
+  portal: string;
 }
 
 const calls: Call[] = [];
@@ -24,6 +25,7 @@ const core = createServer((req: IncomingMessage, res) => {
       url: req.url ?? "",
       body,
       capability: String(req.headers[CAPABILITY_HEADER] ?? ""),
+      portal: String(req.headers[PORTAL_IDENTITY_HEADER] ?? ""),
     });
     res.writeHead(200, { "content-type": "application/json" });
     if (path === "/v1/session-cap") return void res.end(JSON.stringify({ token: "cap-token" }));
@@ -84,11 +86,12 @@ test("scope apps read and write relay the scope to core", async () => {
   assert.equal((await fetch(`${base}/api/scope-apps`, { headers })).status, 400);
 });
 
-test("integration routes reach the admin MCP server API with a session capability", async () => {
+test("integration routes reach the admin MCP server API as the signed-in user", async () => {
   let before = calls.length;
   const list = await fetch(`${base}/api/mcp-servers`, { headers });
   assert.equal(list.status, 200);
-  assert.equal(since(before, "/v1/admin/mcp-servers")?.capability, "cap-token");
+  assert.equal(since(before, "/v1/admin/mcp-servers")?.capability, "");
+  assert.equal(since(before, "/v1/admin/mcp-servers")?.portal, headers[PORTAL_IDENTITY_HEADER]);
 
   before = calls.length;
   const saved = await fetch(`${base}/api/mcp-servers/quickbooks-ab12`, {
@@ -106,7 +109,8 @@ test("integration routes reach the admin MCP server API with a session capabilit
   assert.equal(saved.status, 200);
   const put = since(before, "/v1/admin/mcp-servers/quickbooks-ab12");
   assert.equal(put?.method, "PUT");
-  assert.equal(put?.capability, "cap-token");
+  assert.equal(put?.capability, "");
+  assert.equal(put?.portal, headers[PORTAL_IDENTITY_HEADER]);
   assert.deepEqual(put?.body.scopes, ["group:web-project-p1"]);
 
   before = calls.length;
