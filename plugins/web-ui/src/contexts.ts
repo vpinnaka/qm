@@ -117,13 +117,22 @@ let contextsFetchSeq = 0;
 let contextsQuery = "";
 let contextsWorkspaceFilter: "active" | "all" = "active";
 
-async function fetchContexts(): Promise<CoreContext[]> {
-  const fetchSeq = ++contextsFetchSeq;
+let contextsFetchLatest: { seq: number; promise: Promise<CoreContext[]> } | null = null;
+
+function fetchContexts(): Promise<CoreContext[]> {
+  const seq = ++contextsFetchSeq;
+  contextsFetchLatest = { seq, promise: loadContexts(seq) };
+  return contextsFetchLatest.promise;
+}
+
+async function loadContexts(fetchSeq: number): Promise<CoreContext[]> {
   const result = await api<{ contexts: CoreContext[] }>("/api/contexts").catch((error: unknown) => {
     if (fetchSeq !== contextsFetchSeq) return null;
     throw error;
   });
-  if (!result || fetchSeq !== contextsFetchSeq) return contextsState.list;
+  if (fetchSeq !== contextsFetchSeq)
+    return contextsFetchLatest?.seq === contextsFetchSeq ? contextsFetchLatest.promise : contextsState.list;
+  if (!result) return contextsState.list;
   contextsState.list = result.contexts ?? [];
   contextsState.loaded = true;
   contextsState.loadedAt = Date.now();
