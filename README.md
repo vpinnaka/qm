@@ -2,6 +2,8 @@
 
 A multiplayer agent harness for work. In Slack and on the web.
 
+> **This fork is QM for bookkeepers.** Per-client workspaces, memory, apps and MCP servers, and a bookkeeping model fine-tuned on River. [Watch the demo](https://drive.google.com/file/d/19HVbGN0btbGWnPSKpOPnccyErmYKoNFL/view) and see [hackathon/README.md](hackathon/README.md) for what changed and how to run it.
+
 ## Setup
 
 Tell your coding agent of choice `Let's deploy https://github.com/yc-software/qm`. From here, it should follow the deployment guide in this repo.
